@@ -1,0 +1,14 @@
+#terraform
+terraform/**/.terraform/
+terraform/**/*tfstate*
+terraform/**/plan.out
+terraform/**/*lock*
+
+#packer
+packer/**/99-pve.cfg
+packer/iso
+
+#bootstrap
+Bootstrap/TechnoTim/k3s-ansible/.env/
+Bootstrap/TechnoTim/k3s-ansible/*.log
+Bootstrap/TechnoTim/k3s-ansible/ansible.cfg

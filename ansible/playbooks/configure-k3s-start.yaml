@@ -1,0 +1,76 @@
+---
+- name: Setup new k3s cluster machines
+  hosts: k3s_longhorn
+  remote_user: k3sadmin
+  become: true
+  vars_files:
+    - ../secrets/vaults/harbourside.yml
+  vars:
+    cifs_uri: //10.90.100.1/kubeShare
+    mount_point: "/mnt/kubeShare/"
+
+  tasks:
+  - name: Install packages
+    apt:
+      name:
+        - python3 # Installs Python
+        - python3-pip # Installs Pip (Python package manager)
+        - python-is-python3 #Creates a symantic link so that you can use 'python' in commands instead of 'python3'
+        - git # Installs Git
+        - curl # Installs Curl
+        - wget # Installs Wget
+        - apt-transport-https # Allows apt to use https
+        - ca-certificates # Pulls in common certificates to speed up the process of needing to download them
+        - gnupg # Allows you to encrypt and sign your data and communications
+        - docker.io # Installs Docker
+        - cifs-utils # Installs CIFS utilities
+
+  - name: Install Helm
+    block:
+      - name: Download Helm install script
+        get_url:
+          url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+          dest: /tmp/get-helm-3
+          mode: '0700'
+
+      - name: Run Helm install script
+        command: /tmp/get-helm-3
+
+  - name: Setup Cifs share
+    block:
+      - name: cifs Utils Present
+        ansible.builtin.package:
+          name: cifs-utils
+          state: present
+
+      - name: check mountpoint exists
+        ansible.builtin.file:
+          path: "{{ mount_point }}"
+          state: directory
+
+      - name: Change directory permissions
+        ansible.builtin.file:
+          path: "{{ mount_point }}"
+          mode: '0755'
+          owner: k3sadmin
+          group: k3sadmin
+        ignore_errors: true
+          
+      - name: Check if network share is already mounted
+        ansible.builtin.shell:
+          cmd: mountpoint -q {{ mount_point }}
+        register: result
+        ignore_errors: true
+
+      - name: Mount network share
+        ansible.builtin.shell:
+          cmd: >
+            mount -t cifs {{ cifs_uri }} {{ mount_point }} -o username="{{ cifs_username }}",password="{{ cifs_password }}",vers=3.0
+        when: result is failed
+
+      - name: Add mount to fstab
+        ansible.builtin.lineinfile:
+          path: /etc/fstab
+          line: "{{ cifs_uri }} {{ mount_point }} cifs username={{ cifs_username }},password={{ cifs_password }},vers=3.0 0 0"
+          state: present
+        when: result is failed
