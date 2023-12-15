@@ -5,8 +5,12 @@ terraform/**/plan.out
 terraform/**/*lock*
 
 #packer
-packer/**/99-pve.cfg
-packer/iso
+packer-broken/**/99-pve.cfg
+packer-broken/iso
+packer-broken/**/crash.log
+packer-broken/**/packer_cache
+packer-broken/**/*.box
+packer-broken/**/*.auto.pkvars.hcl
 
 #bootstrap
 Bootstrap/TechnoTim/k3s-ansible/.env/

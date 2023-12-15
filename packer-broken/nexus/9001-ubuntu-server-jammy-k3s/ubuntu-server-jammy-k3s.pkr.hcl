@@ -60,7 +60,7 @@ source "proxmox-iso" "template" {
     disks {
         disk_size = "22G"
         format = "raw"
-        storage_pool = "local-lvm"
+        storage_pool = "local-zfs"
         type = "scsi"
     }
 
@@ -79,7 +79,7 @@ source "proxmox-iso" "template" {
 
     # VM Cloud-Init Settings
     cloud_init = false # Enable Cloud-Init
-    cloud_init_storage_pool = "local-lvm"
+    cloud_init_storage_pool = "local-zfs"
 
     # PACKER Boot Commands
     boot_command = [
@@ -95,7 +95,7 @@ source "proxmox-iso" "template" {
 
     # PACKER Autoinstall Settings
     http_directory = "http" 
-    http_bind_address = "10.90.101.39"
+    http_bind_address = "172.23.102.235"
     http_port_min = 8802
     http_port_max = 8802
 

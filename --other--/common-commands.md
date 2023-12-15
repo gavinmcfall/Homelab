@@ -19,7 +19,13 @@
 ## Packer
 
 ```bash
-    #  Building a packer VM Template (need to be in the correct dir: /projects/packer/9001-ubuntu-server-jammy-k3s)
+    # Installing Proxmox Plugin
+        packer plugins install github.com/hashicorp/proxmox
+
+    # Initilize and upgrade plugins
+        packer init -upgrade
+    
+    #  Building a packer VM Template (need to be in the correct dir: /Homelab/packer/nexus/9001-ubuntu-server-jammy-k3s)
         packer build -var-file='./variables.pkr.hcl' ./ubuntu-server-jammy-k3s.pkr.hcl
 ```
 
