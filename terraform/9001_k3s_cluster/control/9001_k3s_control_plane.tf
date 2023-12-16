@@ -4,28 +4,18 @@ terraform {
       source = "loeken/proxmox"
       version = ">=2.9.16"
     }
-    # onepassword = {
-    #   source = "1Password/onepassword"
-    #   version = "1.4.1-beta01"
-    # }
   }
 }
 
 provider "proxmox" {
  
-  pm_api_url = module.onepassword_item.fields["api-url"]
+  pm_api_url = var.pm_api_url
   
-  pm_api_token_id = module.onepassword_item.fields["proxmox-token-id"]
+  pm_api_token_id = var.pm_api_token_id
   
-  pm_api_token_secret = module.onepassword_item.fields["proxmox-token-secret"]
+  pm_api_token_secret = var.pm_api_token_secret
   
   pm_tls_insecure = true
-}
-
-module "onepassword_item" {
-  source = "github.com/bjw-s/terraform-1password-item?ref=main"
-  vault  = "homelab"
-  item   = "terraform-proxmox"
 }
 
 # ProxMox Full-Clone
@@ -95,11 +85,11 @@ EOF
 
   # VM Cloudinit Settings
   cloudinit_cdrom_storage = "local-zfs" # name of your proxmox storage
-  ciuser = module.onepassword_item.fields["admin_user"]
-  cipassword = module.onepassword_item.fields["admin_password"]
+  ciuser = var.admin_user
+  cipassword = var.admin_password
   sshkeys = <<EOF
-  ${module.onepassword_item.fields["ssh_key_01"]}
-  ${module.onepassword_item.fields["ssh_key_02"]}
+  ${var.ssh_key_01}
+  ${var.ssh_key_02}
   EOF
 
   #VM Lifecycle Settings - ignore_changes is used to prevent Terraform from trying to change these settings.
