@@ -84,13 +84,13 @@ EOF
   }
 
   # VM Cloudinit Settings
-  cloudinit_cdrom_storage = "local-zfs" # name of your proxmox storage
-  ciuser = var.admin_user
-  cipassword = var.admin_password
-  sshkeys = <<EOF
-  ${var.ssh_key_01}
-  ${var.ssh_key_02}
-  EOF
+  # cloudinit_cdrom_storage = "local-zfs" # name of your proxmox storage
+  # ciuser = var.admin_user
+  # cipassword = var.admin_password
+  # sshkeys = <<EOF
+  # ${var.ssh_key_01}
+  # ${var.ssh_key_02}
+  # EOF
 
   #VM Lifecycle Settings - ignore_changes is used to prevent Terraform from trying to change these settings.
   lifecycle {
