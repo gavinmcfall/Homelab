@@ -1,20 +1,41 @@
-variable "onepassword_token" {
-    default = ""
+# OnePassword Vault: homelab
+
+data "onepassword_item" "proxmox_api_url" {
+  vault = "homelab"
+  title = "ProxMox/nexus-api"
 }
 
-variable "proxmox_api_url" {
-    default = "op://homelab/ProxMox/add more/nexus-api"
+data "onepassword_item" "proxmox_api_token_id" {
+  vault = "homelab"
+  title = "Proxmox-Users/Terraform/Terraform-Token-ID"
 }
 
-variable "proxmox_api_token_id" {
-    default = "op://homelab/Proxmox-Users/Terraform/Terraform-Token-ID"
-    sensitive = true
+data "onepassword_item" "proxmox_api_token_secret" {
+  vault = "homelab"
+  title = "Proxmox-Users/Terraform/Terraform-Secret"
 }
 
-variable "proxmox_api_token_secret" {
-    default = "op://homelab/Proxmox-Users/Terraform/Terraform-Secret"
-    sensitive = true
+data "onepassword_item" "ssh_key_01" {
+  vault = "homelab"
+  title = "sshkeys/uwtt3vddfmulvrhwwzaskiwck4/wsl2-ssh-key"
 }
+
+data "onepassword_item" "ssh_key_02" {
+  vault = "homelab"
+  title = "sshkeys/iwsa2h2wx4qeyy2yayltvy5pby/nerdzpc-ssh-key"
+}
+
+data "onepassword_item" "admin_username" {
+  vault = "homelab"
+  title = "k3s_admin/username"
+}
+
+data "onepassword_item" "admin_password" {
+  vault = "homelab"
+  title = "k3s_admin/password"
+}
+
+# Defined Variables
 
 variable "template_name" {
     default = "ubuntu-server-jammy-k3s"
@@ -24,19 +45,14 @@ variable "proxmox_host" {
     default = "nexus"
 }
 
-variable "ssh_key_01" {
-    default = "op://homelab/sshkeys/uwtt3vddfmulvrhwwzaskiwck4/wsl2-ssh-key"
+variable "onepassword_token" {
+  description = "The token for 1Password"
+  type        = string
+  sensitive   = true
 }
 
-variable "ssh_key_02" {
-    default = "op://homelab/sshkeys/iwsa2h2wx4qeyy2yayltvy5pby/nerdzpc-ssh-key"
-    
-}
-
-variable "admin_password" {
-  default = "op://homelab/k3s_admin/password"
-}
-
-variable "admin_username" {
-  default = "op://homelab/k3s_admin/username"
+variable "onepassword_url" {
+  description = "The url for 1Password"
+  type        = string
+  sensitive   = true
 }

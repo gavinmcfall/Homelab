@@ -3,6 +3,7 @@ terraform/**/.terraform/
 terraform/**/*tfstate*
 terraform/**/plan.out
 terraform/**/*lock*
+terraform/**/secrets.auto.tfvars
 
 #packer
 packer-broken/**/99-pve.cfg

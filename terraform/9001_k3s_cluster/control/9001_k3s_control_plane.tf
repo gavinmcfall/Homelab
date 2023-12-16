@@ -13,17 +13,17 @@ terraform {
 
 provider "proxmox" {
  
-  pm_api_url = var.proxmox_api_url
+  pm_api_url = data.onepassword_item.proxmox_api_url.password
   
-  pm_api_token_id = var.proxmox_api_token_id
+  pm_api_token_id = data.onepassword_item.proxmox_api_token_id.password
   
-  pm_api_token_secret = var.proxmox_api_token_secret
+  pm_api_token_secret = data.onepassword_item.proxmox_api_token_secret.password
   
   pm_tls_insecure = true
 }
 
 provider "onepassword" {
-  url = ""
+  url = var.onepassword_url
   token = var.onepassword_token
 }
 
@@ -94,11 +94,11 @@ EOF
 
   # VM Cloudinit Settings
   cloudinit_cdrom_storage = "local-zfs" # name of your proxmox storage
-  ciuser = var.admin_username
-  cipassword = var.admin_password
+  ciuser = data.onepassword_item.admin_username.username
+  cipassword = data.onepassword_item.admin_password.password
   sshkeys = <<EOF
-  ${var.ssh_key_01}\n
-  ${var.ssh_key_02}
+  ${data.onepassword_item.ssh_key_01.password}
+  ${data.onepassword_item.ssh_key_02.password}
   EOF
 
   #VM Lifecycle Settings - ignore_changes is used to prevent Terraform from trying to change these settings.
