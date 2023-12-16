@@ -13,7 +13,7 @@ terraform {
 
 provider "proxmox" {
  
-  pm_api_url = data.onepassword_item.proxmox_api_url.password
+  pm_api_url = data.onepassword_item.proxmox_api_url.uuid
   
   pm_api_token_id = data.onepassword_item.proxmox_api_token_id.password
   
@@ -23,8 +23,9 @@ provider "proxmox" {
 }
 
 provider "onepassword" {
-  url = var.onepassword_url
-  token = var.onepassword_token
+  #url = var.onepassword_url
+  service_account_token = var.onepassword_token
+  #account = var.onepassword_account
 }
 
 # ProxMox Full-Clone

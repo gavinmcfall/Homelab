@@ -2,7 +2,7 @@
 
 data "onepassword_item" "proxmox_api_url" {
   vault = "homelab"
-  title = "ProxMox/nexus-api"
+  title = "ProxMox/add more/nexus-api"
 }
 
 data "onepassword_item" "proxmox_api_token_id" {
@@ -51,8 +51,14 @@ variable "onepassword_token" {
   sensitive   = true
 }
 
-variable "onepassword_url" {
-  description = "The url for 1Password"
-  type        = string
-  sensitive   = true
-}
+# variable "onepassword_url" {
+#   description = "The url for 1Password"
+#   type        = string
+#   sensitive   = true
+# }
+
+# variable "onepassword_account" {
+#   description = "The account ID for 1Password"
+#   type        = string
+#   sensitive   = true
+# }
