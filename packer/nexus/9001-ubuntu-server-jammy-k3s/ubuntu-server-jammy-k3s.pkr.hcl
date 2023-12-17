@@ -25,7 +25,7 @@ variable "proxmox_node" {
 }
 
 # Resource Definition for the VM Template
-source "proxmox-iso" "template" {
+source "proxmox-iso" "ubuntu-server-jammy" {
  
     # Proxmox Connection Settings
     proxmox_url = "${var.proxmox_api_url}"
@@ -61,7 +61,7 @@ source "proxmox-iso" "template" {
         disk_size = "22G"
         format = "raw"
         storage_pool = "local-zfs"
-        type = "scsi"
+        type = "virtio"
     }
 
     # VM CPU Settings
@@ -78,7 +78,7 @@ source "proxmox-iso" "template" {
     } 
 
     # VM Cloud-Init Settings
-    cloud_init = false # Enable Cloud-Init
+    cloud_init = true # Enable Cloud-Init
     cloud_init_storage_pool = "local-zfs"
 
     # PACKER Boot Commands
@@ -95,7 +95,7 @@ source "proxmox-iso" "template" {
 
     # PACKER Autoinstall Settings
     http_directory = "http" 
-    http_bind_address = "172.23.102.235"
+    http_bind_address = "10.90.101.39"
     http_port_min = 8802
     http_port_max = 8802
 
@@ -111,7 +111,7 @@ source "proxmox-iso" "template" {
 build {
 
     name = var.template_name
-    sources = ["source.proxmox-iso.template"]
+    sources = ["source.proxmox-iso.ubuntu-server-jammy"]
 
     # Provisioning the VM Template for Cloud-Init Integration in Proxmox #1
     provisioner "shell" {
@@ -124,6 +124,7 @@ build {
         "sudo apt -y autoclean",
         "sudo cloud-init clean",
         "sudo rm -f /etc/cloud/cloud.cfg.d/subiquity-disable-cloudinit-networking.cfg",
+        "sudo rm -f /etc/netplan/00-installer-config.yaml",
         "sudo sync"
     ]
 }
