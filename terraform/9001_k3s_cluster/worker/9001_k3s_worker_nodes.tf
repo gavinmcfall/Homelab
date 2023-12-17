@@ -1,12 +1,6 @@
 terraform {
   required_providers {
-    proxmox = {
-      #source  = "Telmate/proxmox"
-      #version = ">=2.9.14"
-
-      #source = "localhost/providers/proxmox"
-      #version = "2.9.11"
-      
+    proxmox = { 
       source = "loeken/proxmox"
       version = ">=2.9.16"
     }
@@ -15,11 +9,11 @@ terraform {
 
 provider "proxmox" {
  
-  pm_api_url = var.proxmox_api_url
+  pm_api_url = var.pm_api_url
   
-  pm_api_token_id = var.proxmox_api_token_id
+  pm_api_token_id = var.pm_api_token_id
   
-  pm_api_token_secret = var.proxmox_api_token_secret
+  pm_api_token_secret = var.pm_api_token_secret
   
   pm_tls_insecure = true
 }
@@ -38,7 +32,7 @@ resource "proxmox_vm_qemu" "worker_nodes" {
   vmid = tostring(110 + count.index + 1) # this will be the VM ID in proxmox. 101, 102, 103, etc.
   name = format("pyro-0%d", count.index + 1) #count.index starts at 0, so + 1 means this VM will be named pyro-01 in proxmox
   
-  # Other Configuration
+# Other Configuration
   desc = <<EOF
 # Operating System
 
@@ -91,7 +85,7 @@ EOF
   ipconfig0 = format("ip=10.90.3.%d/16,gw=10.90.254.1", 110 + count.index + 1)
   nameserver = "10.90.1.10"
   
-  # #VM Network Settings
+  # VM Network Settings
   network {
     model = "virtio"
     bridge = "vmbr0"
@@ -99,10 +93,10 @@ EOF
 
   # VM Cloudinit Settings
   cloudinit_cdrom_storage = "local-zfs" # name of your proxmox storage
-  ciuser = var.admin_username
+  ciuser = var.admin_user
   cipassword = var.admin_password
   sshkeys = <<EOF
-  ${var.ssh_key_01}\n
+  ${var.ssh_key_01}
   ${var.ssh_key_02}
   EOF
 

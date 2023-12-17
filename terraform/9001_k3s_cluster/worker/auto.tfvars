@@ -26,10 +26,10 @@ variable "admin_password" {
     default = "{{ op://homelab/k3s_admin/password}}"
 }
 
-# variable "ssh_key_01" {
-#     default = "{{ op://homelab/sshkeys/uwtt3vddfmulvrhwwzaskiwck4/wsl2-ssh-key }}"
-# }
+variable "ssh_key_01" {
+    default = "{{ op://homelab/sshkeys/uwtt3vddfmulvrhwwzaskiwck4/wsl2-ssh-key }}"
+}
 
-# variable "ssh_key_02" {
-#     default = "{{ op://homelab/sshkeys/iwsa2h2wx4qeyy2yayltvy5pby/nerdzpc-ssh-key}}"
-# }
+variable "ssh_key_02" {
+    default = "{{ op://homelab/sshkeys/iwsa2h2wx4qeyy2yayltvy5pby/nerdzpc-ssh-key}}"
+}

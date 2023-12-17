@@ -1,13 +1,28 @@
 default:
 
-terraform-plan:
+control-plan:
 	sh ./scripts/9001_k3s_control_plan.sh
+	sh ./scripts/cleanup.sh
 
-terraform-apply:
+control-apply:
 	sh ./scripts/9001_k3s_control_apply.sh
+	sh ./scripts/cleanup.sh
 
-terraform-destroy:
+control-destroy:
 	sh ./scripts/9001_k3s_control_destroy.sh
+	sh ./scripts/cleanup.sh
+
+worker-plan:
+	sh ./scripts/9001_k3s_worker_plan.sh
+	sh ./scripts/cleanup.sh
+
+worker-apply:
+	sh ./scripts/9001_k3s_worker_apply.sh
+	sh ./scripts/cleanup.sh
+
+worker-destroy:
+	sh ./scripts/9001_k3s_worker_destroy.sh
+	sh ./scripts/cleanup.sh
 
 
 clean:
