@@ -6,12 +6,12 @@ terraform/**/*lock*
 terraform/**/vars.tf
 
 #packer
-packer-broken/**/99-pve.cfg
-packer-broken/iso
-packer-broken/**/crash.log
-packer-broken/**/packer_cache
-packer-broken/**/*.box
-packer-broken/**/*.auto.pkvars.hcl
+packer/**/99-pve.cfg
+packer/iso/
+packer/**/crash.log
+packer/**/packer_cache
+packer/**/*.box
+packer/**/*.auto.pkvars.hcl
 
 #bootstrap
 Bootstrap/TechnoTim/k3s-ansible/.env/
