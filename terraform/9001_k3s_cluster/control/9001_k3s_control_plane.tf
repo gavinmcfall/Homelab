@@ -85,6 +85,7 @@ EOF
   ${var.ssh_key_02}
   EOF
 
+
   # VM Lifecycle Settings - ignore_changes is used to prevent Terraform from trying to change these settings.
   lifecycle {
     ignore_changes = [
