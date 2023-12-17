@@ -54,6 +54,7 @@ EOF
   
   # Basic VM settings here. agent refers to qemu-guest-agent
   agent = 1 # 1 = true, 0 = false (default)
+  scsihw = "virtio-scsi-pci"
   os_type = "cloud-init"
   cores = 2
   sockets = 1
@@ -63,25 +64,9 @@ EOF
   # Tagging the VMs
   tags = "k3s"
 
-  # VM Disk Settings
-  disk {
-    size = "22G"
-    type = "scsi"
-    storage = "local-zfs" # name of your proxmox storage
-    #iothread = 0
-    discard = "on" # enable TRIM
-    ssd = "1" # enable SSD emulation
-  }
-    # Second Disk - Rook Ceph
-  disk {
-    size = "100G"
-    type = "scsi"
-    storage = "local-zfs" # name of your proxmox storage
-    discard = "on" # enable TRIM
-    ssd = "1" # enable SSD emulation
-  }
+  # VM Disk Settings - Not Needed as template has this disk already
 
-  # # VM IP Settings
+  # VM IP Settings
   ipconfig0 = format("ip=10.90.3.%d/16,gw=10.90.254.1", 110 + count.index + 1)
   nameserver = "10.90.1.10"
   
