@@ -62,6 +62,7 @@ source "proxmox-iso" "ubuntu-server-jammy" {
         format = "raw"
         storage_pool = "local-zfs"
         type = "virtio"
+        discard = "true"
     }
 
     # VM CPU Settings
@@ -78,7 +79,7 @@ source "proxmox-iso" "ubuntu-server-jammy" {
     } 
 
     # VM Cloud-Init Settings
-    cloud_init = true # Enable Cloud-Init
+    cloud_init = false # Enable Cloud-Init
     cloud_init_storage_pool = "local-zfs"
 
     # PACKER Boot Commands
