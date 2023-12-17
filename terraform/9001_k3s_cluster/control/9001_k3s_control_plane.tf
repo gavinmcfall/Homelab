@@ -28,7 +28,7 @@ provider "proxmox" {
 resource "proxmox_vm_qemu" "control_plane" {
 
   #VM Building guide - How many, their ID and names.
-  count = 3 # just want 1 for now
+  count = 1 # just want 1 for now
   vmid = tostring(100 + count.index + 1) # this will be the VM ID in proxmox. 101, 102, 103, etc.
   name = format("stanton-0%d", count.index + 1) #count.index starts at 0, so + 1 means this VM will be named dstanton-01 in proxmox
   
@@ -54,6 +54,7 @@ EOF
   
   # Basic VM settings here. agent refers to qemu-guest-agent
   agent = 1 # 1 = true, 0 = false (default)
+  # scsihw = "virtio-scsi-pci" # virtio-scsi-pci is the default
   os_type = "cloud-init"
   cores = 4
   sockets = 1
@@ -93,12 +94,12 @@ EOF
   EOF
 
   #VM Lifecycle Settings - ignore_changes is used to prevent Terraform from trying to change these settings.
-  lifecycle {
-    ignore_changes = [
-      disk,
-      network,
-    ]
-  }
+  # lifecycle {
+  #   ignore_changes = [
+  #     disk,
+  #     network,
+  #   ]
+  # }
   
   # the ${count.index + 1} appends text to the end of something.
   # E.g for IP addresses, p=10.90.3.10${count.index + 1}/16 would be
