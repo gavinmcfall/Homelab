@@ -60,7 +60,7 @@
 ## Ansible
 
 ```bash
-    # Ruuning a playbook from ~/projects/ansible
+    # Ruuning a playbook from ~/Homelab/ansible
         ansible-playbook -i ./inventory ./playbooks/update-apt-packages.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass
     
     # Checking everything works before running the playbook

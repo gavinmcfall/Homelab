@@ -13,7 +13,5 @@ packer/**/packer_cache
 packer/**/*.box
 packer/**/*.auto.pkvars.hcl
 
-#bootstrap
-Bootstrap/TechnoTim/k3s-ansible/.env/
-Bootstrap/TechnoTim/k3s-ansible/*.log
-Bootstrap/TechnoTim/k3s-ansible/ansible.cfg
+#ansible
+ansible/**/harbourside.pass
