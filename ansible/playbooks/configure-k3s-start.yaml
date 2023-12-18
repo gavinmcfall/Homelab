@@ -1,6 +1,6 @@
 ---
 - name: Setup new k3s cluster machines
-  hosts: k3s_longhorn
+  hosts: k3s
   remote_user: k3sadmin
   become: true
   order: inventory
