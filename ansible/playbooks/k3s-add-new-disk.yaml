@@ -12,9 +12,9 @@
       async: 1 # run the task in the background
       poll: 0 # don't wait for the task to complete
 
-    - name: Wait for 10 seconds
+    - name: Wait for 60 seconds
       pause:
-        seconds: 10
+        seconds: 60
 
 - name: Add new disk to VM
   hosts: k3s_agents
