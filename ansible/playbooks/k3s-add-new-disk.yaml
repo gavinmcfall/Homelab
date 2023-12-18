@@ -1,0 +1,39 @@
+---
+- name: Shutdown VMs
+  hosts: k3s_agents
+  gather_facts: yes
+  remote_user: k3sadmin
+  become: yes
+  vars_files:
+  - ../secrets/vaults/harbourside.yml
+  tasks:
+    - name: Shutdown VM
+      ansible.builtin.shell: shutdown -h now
+      async: 1 # run the task in the background
+      poll: 0 # don't wait for the task to complete
+
+    - name: Wait for 10 seconds
+      pause:
+        seconds: 10
+
+- name: Add new disk to VM
+  hosts: k3s_agents
+  vars_files:
+  - ../secrets/vaults/harbourside.yml
+  gather_facts: no
+  tasks:
+    - name: Create new disk in VM (force rewrite in case it exists already)
+      community.general.proxmox_disk:
+        api_host: "{{ proxmox_host }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_token_id: "{{ proxmox_api_token_id }}"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        vmid: "{{ hostvars[inventory_hostname]['vm_id'] }}"
+        disk: virtio1
+        format: raw
+        storage: local-zfs
+        size: 100
+        create: forced
+        state: present
+      delegate_to: localhost
+      connection: local
