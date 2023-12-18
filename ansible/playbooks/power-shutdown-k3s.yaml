@@ -1,10 +1,8 @@
-- name: Shutdown VMs in reverse order
+- name: Shutdown VMs in order
   hosts: k3s
   remote_user: k3sadmin
   become: true
-  vars_files:
-    - ../secrets/vaults/harbourside.yml
-  order: reverse_inventory
+  order: inventory
   serial: 1
   tasks:
     - name: Shutdown VM

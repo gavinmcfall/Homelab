@@ -2,19 +2,17 @@
   hosts: k3s
   remote_user: k3sadmin
   gather_facts: no
-  vars_files:
-    - ../secrets/vaults/harbourside.yml
   order: inventory
   serial: 1
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
+  vars_files:
+    - ../secrets/vaults/harbourside.yml
   tasks:
     - name: Start VM
       community.general.proxmox_kvm:
         api_user: "{{ proxmox_api_user }}"
-        api_token_id: "ansible"
+        api_token_id: "{{ proxmox_api_token_id }}"
         api_token_secret: "{{ proxmox_api_token_secret }}"
-        api_host: "{{ proxmox_api_host }}"
+        api_host: "{{ proxmox_host }}"
         node: "{{ proxmox_node }}"
         vmid: "{{ hostvars[inventory_hostname]['vm_id'] }}"
         state: started
