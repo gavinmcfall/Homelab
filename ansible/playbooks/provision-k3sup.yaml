@@ -1,0 +1,109 @@
+- name: Check SSH connectivity to all hosts
+  hosts: k3s
+  tasks:
+    - name: Ping all hosts
+      ping:
+
+- name: Provision k3sup 
+  hosts: localhost
+  tasks:
+    - name: Install k3sup
+      become: yes
+      become_user: root
+      shell: |
+        curl -sLS https://get.k3sup.dev | sh
+        sudo install k3sup /usr/local/bin/
+      register: k3sup_install
+      changed_when: k3sup_install.stdout != ""
+      failed_when: k3sup_install.stderr != ""
+      check_mode: no
+      tags:
+        - k3sup
+
+- name: Install k3s using k3sup
+  hosts: k3s_control_plane[0]
+  tasks:
+    - name: Run k3sup install command
+      delegate_to: localhost
+      shell: >
+        k3sup install --ip {{ ansible_host }} \
+        --tls-san {{ hostvars['kube-vip']['ansible_host'] }} \
+        --cluster \
+        --context k3s-cluster-ha \
+        --k3s-extra-args "--disable traefik --disable servicelb --node-ip={{ ansible_host }}"
+      register: k3sup_control01
+      changed_when: k3sup_control01.stdout != ""
+      failed_when: k3sup_control01.stderr != ""
+      check_mode: no
+      tags:
+        - k3sup-control
+
+- name: Set KUBECONFIG environment variable
+  hosts: localhost
+  tasks:
+    - name: Export KUBECONFIG
+      shell: export KUBECONFIG=/home/gavin/kubeconfig
+
+- name: Install kube-vip RBAC manifest
+  hosts: localhost
+  vars:
+    kubeconfig_path: /home/gavin/kubeconfig
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  tasks:
+    - name: Apply kube-vip RBAC manifest
+      k8s:
+        src: https://kube-vip.io/manifests/rbac.yaml
+        state: present
+
+- name: SSH into k3s_control_plane[0] and setup kube-vip
+  hosts: k3s_control_plane[0]
+  become: yes
+  tasks:
+    - name: Pull kube-vip image
+      ansible.builtin.command:
+        cmd: ctr image pull docker.io/plndr/kube-vip:latest
+
+    - name: Create alias for kube-vip
+      ansible.builtin.shell:
+        cmd: echo 'alias kube-vip="ctr run --rm --net-host docker.io/plndr/kube-vip:latest vip /kube-vip"' >> ~/.bashrc
+
+    - name: Run kube-vip manifest daemonset
+      shell: >
+        kube-vip manifest daemonset \
+        --arp \
+        --interface eth0 \
+        --address {{ hostvars['kube-vip']['ansible_host'] }} \
+        --controlplane \
+        --leaderElection \
+        --inCluster | tee /var/lib/rancher/k3s/server/manifests/kube-vip.yaml
+      register: kube_vip_manifest_replicated
+      changed_when: kube_vip_manifest.stdout != ""
+      failed_when: kube_vip_manifest.stderr != ""
+      check_mode: no
+      tags:
+        - kube-vip-manifest
+
+- name: Join Second Control to k3s cluster
+  hosts: k3s_control_plane:!k3s_control_plane[0]
+  become: yes
+  tasks:
+    - name: Run k3sup join command
+      delegate_to: localhost
+      shell: >
+           k3sup join \
+           --ip {{ ansible_host }} \
+           --user k3sadmin \
+           --sudo \
+           --k3s-channel stable \
+           --server \
+           --server-ip {{ hostvars['kube-vip']['ansible_host'] }} \
+           --server-user k3sadmin \
+           --sudo \
+           --k3s-extra-args "--disable traefik  --disable servicelb --node-ip={{ ansible_host }}"
+      register: k3sup_join
+      changed_when: k3sup_join.stdout != ""
+      failed_when: k3sup_join.stderr != ""
+      check_mode: no
+      tags:
+        - k3sup-join

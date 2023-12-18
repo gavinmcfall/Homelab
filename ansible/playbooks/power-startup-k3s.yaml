@@ -1,5 +1,5 @@
 - name: Start VMs in order
-  hosts: k3s_agents
+  hosts: k3s
   remote_user: k3sadmin
   gather_facts: no
   order: inventory
