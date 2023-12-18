@@ -1,5 +1,5 @@
 - name: Shutdown VMs in order
-  hosts: test
+  hosts: k3s
   remote_user: k3sadmin
   become: true
   order: inventory
