@@ -1,0 +1,5 @@
+mount_point: "/mnt/kubeShare/"
+
+cifs_uri: "//{{ hostvars['NerdzPC']['ansible_host'] }}/kubeShare"
+
+kubeconfig_path: "/home/gavin/kubeconfig"

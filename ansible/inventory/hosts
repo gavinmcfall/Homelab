@@ -17,3 +17,6 @@ k3s_agents
 
 [servicelb]
 kube-vip ansible_host=10.90.3.100
+
+[workstation]
+NerdzPC ansible_host=10.90.100.1

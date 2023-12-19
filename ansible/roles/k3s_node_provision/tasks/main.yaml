@@ -1,0 +1,22 @@
+- name: Install packages
+  apt:
+    name:
+      - sudo # Installs sudo
+      - binutils # Installs Binutils
+      - python3 # Installs Python
+      - python3-pip # Installs Pip (Python package manager)
+      - python-is-python3 #Creates a symantic link so that you can use 'python' in commands instead of 'python3'
+      - git # Installs Git
+      - curl # Installs Curl
+      - wget # Installs Wget
+      - apt-transport-https # Allows apt to use https
+      - ca-certificates # Pulls in common certificates to speed up the process of needing to download them
+      - gnupg # Allows you to encrypt and sign your data and communications
+      - docker.io # Installs Docker
+      - cifs-utils # Installs CIFS utilities
+
+- name: Install Docker & Helm
+  include_tasks: container.yaml
+
+- name: Setup Cifs share
+  include_tasks: cifs.yaml

@@ -1,0 +1,15 @@
+- name: Install packages
+  apt:
+    name:
+      - docker.io # Installs Docker
+
+- name: Install Helm
+  block:
+    - name: Download Helm install script
+      get_url:
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        dest: /tmp/get-helm-3
+        mode: '0700'
+
+    - name: Run Helm install script
+      command: /tmp/get-helm-3

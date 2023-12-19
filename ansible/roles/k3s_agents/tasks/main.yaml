@@ -1,0 +1,20 @@
+- name: Install k3s using k3sup
+  hosts: k3s_agents
+  tasks:
+    - name: Run k3sup install command
+      delegate_to: localhost
+      shell: >
+        k3sup join \
+        --user k3sadmin \
+        --sudo \
+        --server-ip {{ hostvars['kube-vip']['ansible_host'] }} \
+        --ip {{ ansible_host }} \
+        --k3s-channel stable -- \
+        --k3s-extra-args "--disable traefik --disable servicelb" \
+        --print-command
+      register: k3sup_agents
+      changed_when: k3sup_agents.stdout != ""
+      failed_when: k3sup_agents.stderr != ""
+      check_mode: no
+      tags:
+        - k3sup-agents
