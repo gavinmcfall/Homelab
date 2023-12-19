@@ -8,6 +8,9 @@ proxmox-ubuntu-22-04:
 	sh ./scripts/ubuntu-22.04.sh
 	sh ./scripts/cleanup.sh
 
+master-k3s:
+	sh ./scripts/master-k3s.sh
+	sh ./scripts/cleanup.sh
 
 clean:
 	sh ./scripts/cleanup.sh

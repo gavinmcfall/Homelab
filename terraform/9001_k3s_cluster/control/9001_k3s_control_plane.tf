@@ -28,7 +28,7 @@ provider "proxmox" {
 resource "proxmox_vm_qemu" "control_plane" {
 
   #VM Building guide - How many, their ID and names.
-  count = 3 # just want 1 for now
+  count = 1 # just want 1 for now
   vmid = tostring(100 + count.index + 1) # this will be the VM ID in proxmox. 101, 102, 103, etc.
   name = format("stanton-0%d", count.index + 1) #count.index starts at 0, so + 1 means this VM will be named dstanton-01 in proxmox
   
@@ -56,10 +56,10 @@ EOF
   agent = 1 # 1 = true, 0 = false (default)
   scsihw = "virtio-scsi-pci"
   os_type = "cloud-init"
-  cores = 4
+  cores = 6
   sockets = 1
   cpu = "host"
-  memory = 4096
+  memory = 16384
 
   # Tagging the VMs
   tags = "k3s"
