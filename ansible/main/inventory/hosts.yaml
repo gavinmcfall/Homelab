@@ -1,0 +1,34 @@
+---
+kubernetes:
+  vars:
+    ansible_user: k3sadmin
+    ansible_ssh_port: 22
+  children:
+    master:
+      hosts:
+        stanton-01:
+          ansible_host: 10.90.3.101
+          ceph_drives:
+            - /dev/vdb
+        stanton-02:
+          ansible_host: 10.90.3.102
+          ceph_drives:
+            - /dev/vdb
+        stanton-03:
+          ansible_host: 10.90.3.103
+          ceph_drives:
+            - /dev/vdb
+    workers:
+      hosts:
+        pyro-01:
+          ansible_host: 10.90.3.111
+          ceph_drives:
+            - /dev/vdb
+        pyro-02:
+          ansible_host: 10.90.3.112
+          ceph_drives:
+            - /dev/vdb
+        pyro-03:
+          ansible_host: 10.90.3.113
+          ceph_drives:
+            - /dev/vdb
