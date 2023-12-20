@@ -9,7 +9,7 @@ done
 username="k3sadmin"
 
 # Loop through the IP ranges
-for i in {101..103} {111..116}; do
+for i in {101..101} {111..113}; do
   ip="10.90.3.$i"
   
   # Use SSH to connect to the IP and automatically add the new host key to the known_hosts file
