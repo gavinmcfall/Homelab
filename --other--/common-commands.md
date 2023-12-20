@@ -71,7 +71,7 @@
         
         ansible-playbook -i ./inventory ./playbooks/power-startup-k3s.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass 
         
-        ansible-playbook -i ./inventory ./playbooks/power-shutdown-k3s.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass 
+        ansible-playbook -i ./Inventory ./playbooks/power-shutdown-k3s.yaml
 
     # Editing a Vault
         ansible-vault edit --vault-password-file ./secrets/passwd_files/harbourside.pass ./secrets/vaults/harbourside.yml 
