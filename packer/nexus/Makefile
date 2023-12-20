@@ -12,5 +12,9 @@ master-k3s:
 	sh ./scripts/master-k3s.sh
 	sh ./scripts/cleanup.sh
 
+agent-k3s:
+	sh ./scripts/agent-k3s.sh
+	sh ./scripts/cleanup.sh
+
 clean:
 	sh ./scripts/cleanup.sh
