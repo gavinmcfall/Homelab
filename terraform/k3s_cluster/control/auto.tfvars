@@ -1,5 +1,5 @@
 variable "template_name" {
-    default = "ubuntu-server-jammy-k3s"
+    default = "master-k3s"
 }
 
 variable "proxmox_host" {
