@@ -60,20 +60,22 @@
 ## Ansible
 
 ```bash
-    # Ruuning a playbook from ~/Homelab/ansible
-        ansible-playbook -i ./inventory ./playbooks/update-apt-packages.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass
+    # Syntax notes
+        # Validate playbook before running (note some tasks ignore check)
+            --check
     
-    # Checking everything works before running the playbook
-        ansible-playbook -i ./inventory ./playbooks/update-apt-packages.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass --check
-    
-    # Change VM State
-        ansible-playbook -i ./inventory ./playbooks/power-reboot-k3s.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass 
-        
-        ansible-playbook -i ./inventory ./playbooks/power-startup-k3s.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass 
-        
-        ansible-playbook -i ./Inventory ./playbooks/power-shutdown-k3s.yaml
+    # MANAGEMENT - Run from ~/Homelab/ansible/management
+        # Power State
+            # Start
+                ansible-playbook -i ./Inventory ./playbooks/power-startup-k3s.yaml --vault-password-file ../secrets/passwd_files/harbourside.pass
+            # Reboot
+                ansible-playbook -i ./Inventory ./playbooks/power-reboot-k3s.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass
+            # Shutdown
+                ansible-playbook -i ./Inventory ./playbooks/power-shutdown-k3s.yaml
+        # Update Ubuntu
+            ansible-playbook -i ./Inventory ./playbooks/update-apt-packages.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass    
 
-    # Editing a Vault
+    # Editing a Vault - Run from ~/Homelab/ansible
         ansible-vault edit --vault-password-file ./secrets/passwd_files/harbourside.pass ./secrets/vaults/harbourside.yml 
 ```
 

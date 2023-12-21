@@ -10,14 +10,14 @@ kubernetes:
           ansible_host: 10.90.3.101
           ceph_drives:
             - /dev/vdb
-        stanton-02:
-          ansible_host: 10.90.3.102
-          ceph_drives:
-            - /dev/vdb
-        stanton-03:
-          ansible_host: 10.90.3.103
-          ceph_drives:
-            - /dev/vdb
+        # stanton-02:
+        #   ansible_host: 10.90.3.102
+        #   ceph_drives:
+        #     - /dev/vdb
+        # stanton-03:
+        #   ansible_host: 10.90.3.103
+        #   ceph_drives:
+        #     - /dev/vdb
     workers:
       hosts:
         pyro-01:

@@ -5,7 +5,7 @@
   order: inventory
   serial: 1
   vars_files:
-    - ../secrets/vaults/harbourside.yml
+    - ../../secrets/vaults/harbourside.yml
   tasks:
     - name: Start VM
       community.general.proxmox_kvm:
