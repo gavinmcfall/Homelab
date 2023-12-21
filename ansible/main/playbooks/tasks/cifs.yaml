@@ -15,8 +15,8 @@
       ansible.builtin.file:
         path: "{{ mount_point }}"
         mode: '0755'
-        owner: k3sadmin
-        group: k3sadmin
+        owner: {{ ansible_user}}
+        group: {{ ansible_user}}
       ignore_errors: true
         
     - name: Check if network share is already mounted

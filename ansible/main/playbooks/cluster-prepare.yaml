@@ -9,7 +9,6 @@
     cifs_uri: //10.90.100.1/kubeShare
     mount_point: "/mnt/kubeShare/"
     zsh_path: "/home/k3sadmin"
-    username: "k3sadmin"
   vars_files:
     - ../../secrets/vaults/harbourside.yml
   pre_tasks:

@@ -67,13 +67,13 @@
       export EDITOR=nano
     marker: "# {mark} ANSIBLE MANAGED BLOCK"
     create: true
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    owner: "{{ ansible_use }}"
+    group: "{{ ansible_user }}"
     mode: "0755"
-  become_user: "{{ username }}"
+  become_user: "{{ ansible_user }}"
 
 - name: Set ZSH as the default shell.
   become: true
   ansible.builtin.user:
-    name: "{{ username }}"
+    name: "{{ ansible_user }}"
     shell: /bin/zsh
