@@ -20,20 +20,23 @@
       ignore_errors: true
         
     - name: Check if network share is already mounted
-      ansible.builtin.shell:
-        cmd: mountpoint -q {{ mount_point }}
-      register: result
-      ignore_errors: true
+      ansible.builtin.mount:
+        path: "{{ mount_point }}"
+        src: "{{ network_share }}"
+        fstype: cifs
+        state: mounted
 
     - name: Mount network share
-      ansible.builtin.shell:
-        cmd: >
-          mount -t cifs {{ cifs_uri }} {{ mount_point }} -o username="{{ cifs_username }}",password="{{ cifs_password }}",vers=3.0
-      when: result is failed
+      ansible.builtin.mount:
+        path: "{{ mount_point }}"
+        src: "{{ cifs_uri }}"
+        fstype: cifs
+        opts: "username={{ cifs_username }},password={{ cifs_password }},vers=3.0"
+        state: mounted
 
     - name: Add mount to fstab
       ansible.builtin.lineinfile:
         path: /etc/fstab
         line: "{{ cifs_uri }} {{ mount_point }} cifs username={{ cifs_username }},password={{ cifs_password }},vers=3.0 0 0"
         state: present
-      when: result is failed
+        create: yes
