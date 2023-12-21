@@ -28,6 +28,17 @@ k3s_server_manifests_urls:
 k3s_server_pod_manifests_templates:
   - kube-vip-static-pod.yaml.j2
 
+# ZSH
+# Set user to be used for configuration
+username: "{{ lookup('env', 'USER') }}"
+
+# Install Nerd Fonts
+install_fonts: true
+installed_nerdfonts:
+  - Meslo
+# Install and configure zsh
+configure_zsh: true
+
 # k3s_registries:
 #   mirrors:
 #     docker.io:

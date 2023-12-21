@@ -1,9 +1,17 @@
 ---
 - name: Prepare System
   hosts: kubernetes
+  remote_user: k3sadmin
   become: true
   gather_facts: true
   any_errors_fatal: true
+  vars:
+    cifs_uri: //10.90.100.1/kubeShare
+    mount_point: "/mnt/kubeShare/"
+    zsh_path: "/home/k3sadmin"
+    username: "k3sadmin"
+  vars_files:
+    - ../../secrets/vaults/harbourside.yml
   pre_tasks:
     - name: Pausing for 2 seconds...
       ansible.builtin.pause:
@@ -15,17 +23,15 @@
           community.general.timezone:
             name: "{{ timezone | default('Etc/UTC') }}"
 
-    - name: Packages
-      block:
-        - name: Packages | Install common packages
-          ansible.builtin.apt:
-            name: apt-transport-https,ca-certificates,conntrack,curl,dirmngr,gdisk,
-              gnupg,hdparm,htop,iperf3,iptables,iputils-ping,ipvsadm,
-              libseccomp2,lm-sensors,neofetch,net-tools,nfs-common,nvme-cli,open-iscsi,parted,psmisc,python3,
-              python3-apt,python3-openshift,python3-kubernetes,python3-yaml,smartmontools,socat,software-properties-common,
-              unzip,util-linux
-              #i965-va-driver-shaders,intel-gpu-tools,intel-media-va-driver-non-free,
-            install_recommends: false
+    - name: Include packages task configuration.
+      ansible.builtin.import_tasks:
+        file: tasks/packages.yaml
+      tags: ["packages"]
+
+    - name: Include cifs task configuration.
+      ansible.builtin.import_tasks:
+        file: tasks/cifs.yaml
+      tags: ["cifs"]
 
     - name: User Configuration
       block:
@@ -51,97 +57,21 @@
             group: root
             mode: "0440"
 
-    - name: Zsh | Download and install Nerd Fonts
+    - name: Setup Shell
       block:
-        - name: Zsh | Download Nerd Fonts
-          ansible.builtin.get_url:
-            url: "https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/FiraCode.zip"
-            dest: "/tmp/FiraCode.zip"
-        - name: Zsh | Extract Nerd Fonts
-          ansible.builtin.unarchive:
-            src: "/tmp/FiraCode.zip"
-            dest: "/tmp"
-            remote_src: yes
-        - name: Zsh | Install Nerd Fonts
-          ansible.builtin.file:
-            src: "/tmp/Fira Code Nerd Font Complete.ttf"
-            dest: "/usr/local/share/fonts/Fira Code Nerd Font Complete.ttf"
-            state: link
-        - name: Zsh | Clean up downloaded files
-          ansible.builtin.file:
-            path: "{{ item }}"
-            state: absent
-          loop:
-            - "/tmp/FiraCode.zip"
-            - "/tmp/Fira Code Nerd Font Complete.ttf"
-        - name: Zsh | Install zsh
-          ansible.builtin.apt:
-            name: zsh
-            install_recommends: false
-        - name: Zsh | Set as default shell
-          ansible.builtin.user:
-            name: "{{ ansible_user }}"
-            shell: /usr/bin/zsh
-        - name: Zsh | Install Oh-My-Zsh
-          ansible.builtin.shell:
-            cmd: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-            args:
-              creates: "{{ '/home/' + ansible_user if ansible_user != 'root' else '/root' }}/.oh-my-zsh"
-        - name: Zsh | Install Powerlevel10k theme
-          ansible.builtin.git:
-            repo: 'https://github.com/romkatv/powerlevel10k.git'
-            dest: "{{ '/home/' + ansible_user if ansible_user != 'root' else '/root' }}/.oh-my-zsh/custom/themes/powerlevel10k"
-            depth: 1
-        - name: Zsh | Configure .zshrc
-          ansible.builtin.lineinfile:
-            path: "{{ '/home/' + ansible_user if ansible_user != 'root' else '/root' }}/.zshrc"
-            regexp: '^ZSH_THEME='
-            line: 'ZSH_THEME="powerlevel10k/powerlevel10k"'
-        - name: Zsh | Configure plugins
-          ansible.builtin.lineinfile:
-            path: "{{ '/home/' + ansible_user if ansible_user != 'root' else '/root' }}/.zshrc"
-            regexp: '^plugins='
-            line: 'plugins=(git docker kubectl npm yarn)'
-        - name: Zsh | Copy .p10k.zsh configuration file
-          ansible.builtin.copy:
-            src: "~/.p10k.zsh"
-            dest: "{{ '/home/' + ansible_user if ansible_user != 'root' else '/root' }}/.p10k.zsh"
-            owner: "{{ ansible_user }}"
-            group: "{{ ansible_user }}"
-            mode: "0644"
-        - name: Append to zshrc
-          ansible.builtin.blockinfile:
-            path: "{{ '/home/' + ansible_user if ansible_user != 'root' else '/root' }}/.zshrc"
-            block: |
-              function k() {
-                  kubectl "$@"
-              }
-              # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-              [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+        - name: Include fonts task configuration.
+          ansible.builtin.import_tasks:
+            file: tasks/fonts.yaml
+          tags: ["fonts"]
 
-              # Change the highlighting for LS for OTHER_WRITABLE
-              LS_COLORS="ow=37;44:$LS_COLORS"
-              export LS_COLORS
-
-              # Set default editor to nano
-              export EDITOR=nano
-            create: yes
-            marker: "# {mark} ANSIBLE MANAGED BLOCK"
-            block_end: "kubectl shorthand"
-            owner: "{{ ansible_user }}"
-            group: "{{ ansible_user }}"
-            mode: "0755"
+        - name: Include ZSH task configuration.
+          ansible.builtin.import_tasks:
+            file: tasks/zsh.yaml
+          tags: ["zsh"]
 
     - name: System Configuration
       notify: Reboot
       block:
-        - name: System Configuration | NFS
-          ansible.builtin.copy:
-            src: files/nfsmount.conf
-            dest: /etc/nfsmount.conf
-            owner: root
-            group: root
-            mode: "0644"
         - name: System Configuration | Disable apparmor
           ansible.builtin.systemd:
             name: apparmor
