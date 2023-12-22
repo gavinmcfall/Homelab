@@ -28,9 +28,9 @@ k3s_server_manifests_urls:
 k3s_server_pod_manifests_templates:
   - kube-vip-static-pod.yaml.j2
 
-# ZSH
-# Set user to be used for configuration
-username: "{{ lookup('env', 'USER') }}"
+#cifs
+mount_point: "/mnt/kubeShare/"
+cifs_uri: "//10.90.100.1/kubeShare"
 
 # Install Nerd Fonts
 install_fonts: true

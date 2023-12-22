@@ -64,6 +64,10 @@
         # Validate playbook before running (note some tasks ignore check)
             --check
     
+    # K3S - Run from /ansible/main
+        # Preparing nodes
+            ansible-playbook -i ./Inventory ./playbooks/cluster-prepare.yaml --vault-password-file ../secrets/passwd_files/harbourside.pass
+    
     # MANAGEMENT - Run from ~/Homelab/ansible/management
         # Power State
             # Start

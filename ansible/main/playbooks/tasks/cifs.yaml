@@ -15,16 +15,14 @@
       ansible.builtin.file:
         path: "{{ mount_point }}"
         mode: '0755'
-        owner: {{ ansible_user}}
-        group: {{ ansible_user}}
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
       ignore_errors: true
         
     - name: Check if network share is already mounted
-      ansible.builtin.mount:
+      ansible.builtin.stat:
         path: "{{ mount_point }}"
-        src: "{{ network_share }}"
-        fstype: cifs
-        state: mounted
+      register: result
 
     - name: Mount network share
       ansible.builtin.mount:
@@ -33,6 +31,7 @@
         fstype: cifs
         opts: "username={{ cifs_username }},password={{ cifs_password }},vers=3.0"
         state: mounted
+      when: not result.stat.exists
 
     - name: Add mount to fstab
       ansible.builtin.lineinfile:
