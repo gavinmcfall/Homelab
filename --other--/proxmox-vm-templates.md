@@ -42,6 +42,9 @@ qm template 9000
 # Add the CIFS Disk on cluster-zfs 250G
 # Clone the VM
 # Give it a Hostname
+# Edit the Disk size to 120G for master, 80g for Agent
+# Edit CPU cores: 6 for Master, 4 Worker
+# Edit RAM: 16384 for Master, 8192 for Agent
 # Go into Cloud-Init and set its fixed IP
 # Boot the Machine
 # ssh into it
