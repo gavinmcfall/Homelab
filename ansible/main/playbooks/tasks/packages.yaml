@@ -40,13 +40,9 @@
           - software-properties-common
           - unzip
           - util-linux
+          - python3-openshift
           #i965-va-driver-shaders,intel-gpu-tools,intel-media-va-driver-non-free,
         install_recommends: false
-
-    - name: Install python3-openshift
-      ansible.builtin.pip:
-        name: openshift
-        executable: pip3
 
 - name: Install Helm
   block:
