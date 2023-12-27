@@ -40,4 +40,14 @@
 qm template 9000
 
 # Add the CIFS Disk on cluster-zfs 250G
+# Clone the VM
+# Give it a Hostname
+# Go into Cloud-Init and set its fixed IP
+# Boot the Machine
+# ssh into it
+
+# Update and install QEMU Guest Agent
+sudo apt update
+sudo apt install -y qemu-guest-agent
+sudo reboot
 ```
