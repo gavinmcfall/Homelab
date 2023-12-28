@@ -1,5 +1,11 @@
 # Common Commands
 
+## Flux reconcile
+
+```bash
+    flux reconcile source git home-kubernetes -n flux-system
+```
+
 ## Kube ctl commands
 
 ```bash
@@ -101,4 +107,12 @@
 
     # Decrypt
         sops -d --in-place <filename>
+```
+
+## Clearing Chrome SSL State
+```bash
+    # In Windows
+    Internet Options > Content > Clear SSL State
+    # In Chrome
+    chrome://restart
 ```
