@@ -1,5 +1,10 @@
 # Common Commands
 
+```bash
+    # Kubectl Cheat Cheat
+    https://kubernetes.io/docs/reference/kubectl/quick-reference/
+```
+
 ## Flux reconcile
 
 ```bash
