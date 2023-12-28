@@ -110,9 +110,11 @@
 ```
 
 ## Clearing Chrome SSL State
+
 ```bash
     # In Windows
     Internet Options > Content > Clear SSL State
+    
     # In Chrome
     chrome://restart
 ```
