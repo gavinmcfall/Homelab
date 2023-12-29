@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Remove old host keys from the known_hosts file
-for i in {101..103} {111..116}; do
+for i in {101..103} {111..113}; do
   ssh-keygen -f "/home/gavin/.ssh/known_hosts" -R "10.90.3.$i"
 done
 
