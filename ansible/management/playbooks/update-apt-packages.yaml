@@ -1,0 +1,9 @@
+---
+- hosts: k3s
+  remote_user: k3sadmin
+  become: true
+  tasks:
+    - name: Update apt packages
+      apt:
+        upgrade: yes
+        update_cache: yes

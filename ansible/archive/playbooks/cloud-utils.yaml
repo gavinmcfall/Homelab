@@ -1,0 +1,15 @@
+---
+  - name: Install Cloud Guest Utils
+    hosts: k3s
+    remote_user: "k3sadmin"
+    vars_files:
+      - ../secrets/vaults/harbourside.yml
+    order: inventory
+    serial: 1
+    tasks:
+      - name: Install Cloud Guest Utils
+        apt:
+          name: cloud-guest-utils
+          state: present
+          update_cache: true
+        become: true

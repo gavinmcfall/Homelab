@@ -1,0 +1,41 @@
+---
+- name: Setup Cifs share
+  block:
+    - name: cifs Utils Present
+      ansible.builtin.package:
+        name: cifs-utils
+        state: present
+
+    - name: check mountpoint exists
+      ansible.builtin.file:
+        path: "{{ mount_point }}"
+        state: directory
+
+    - name: Change directory permissions
+      ansible.builtin.file:
+        path: "{{ mount_point }}"
+        mode: '0755'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      ignore_errors: true
+        
+    - name: Check if network share is already mounted
+      ansible.builtin.stat:
+        path: "{{ mount_point }}"
+      register: result
+
+    - name: Mount network share
+      ansible.builtin.mount:
+        path: "{{ mount_point }}"
+        src: "{{ cifs_uri }}"
+        fstype: cifs
+        opts: "username={{ cifs_username }},password={{ cifs_password }},vers=3.0"
+        state: mounted
+      when: not result.stat.exists
+
+    - name: Add mount to fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "{{ cifs_uri }} {{ mount_point }} cifs username={{ cifs_username }},password={{ cifs_password }},vers=3.0 0 0"
+        state: present
+        create: yes

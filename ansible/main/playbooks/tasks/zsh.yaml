@@ -1,0 +1,79 @@
+---
+- name: Ensure ZSH installed.
+  become: true
+  ansible.builtin.apt:
+    name: zsh
+    state: latest
+
+- name: Remove existing Oh My Zsh installation
+  ansible.builtin.file:
+    path: "{{ zsh_path }}/.oh-my-zsh"
+    state: absent
+    force: yes
+  become: yes
+
+- name: Install Oh My ZSH.
+  ansible.builtin.shell:
+    cmd: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ ansible_user }}"
+
+- name: Zsh | Configure plugins
+  ansible.builtin.lineinfile:
+    path: "{{ '/home/' + ansible_user if ansible_user != 'root' else '/root' }}/.zshrc"
+    regexp: '^plugins='
+    line: 'plugins=(git docker kubectl npm yarn)'
+
+- name: Clone Powerlevel10k theme into oh-my-zsh custom themes directory
+  ansible.builtin.git:
+    repo: 'https://github.com/romkatv/powerlevel10k.git'
+    dest: '{{ zsh_path }}/.oh-my-zsh/custom/themes/powerlevel10k'
+    clone: yes
+    update: yes
+
+- name: Zsh | Copy .p10k.zsh configuration file
+  ansible.builtin.copy:
+    src: "/home/gavin/.p10k.zsh"
+    dest: "{{ zsh_path }}/.p10k.zsh"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+
+- name: Copy .zshrc file from local machine
+  ansible.builtin.copy:
+    src: "/home/gavin/.zshrc"
+    dest: "{{ zsh_path }}/.zshrc"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+
+- name: Insert block into .zshrc
+  ansible.builtin.blockinfile:
+    path: "{{ zsh_path }}/.zshrc"
+    block: |
+      function k() {
+          kubectl "$@"
+      }
+      # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+      [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+      # Change the highlighting for LS for OTHER_WRITABLE
+      LS_COLORS="ow=37;44:$LS_COLORS"
+      export LS_COLORS
+
+      # Set default editor to nano
+      export EDITOR=nano
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    create: true
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  become_user: "{{ ansible_user }}"
+
+- name: Set ZSH as the default shell.
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    shell: /bin/zsh
