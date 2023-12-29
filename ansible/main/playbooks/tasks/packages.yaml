@@ -40,7 +40,7 @@
           - software-properties-common
           - unzip
           - util-linux
-          - python3-openshift
+          #- python3-openshift
           #i965-va-driver-shaders,intel-gpu-tools,intel-media-va-driver-non-free,
         install_recommends: false
 
@@ -54,3 +54,15 @@
 
     - name: Run Helm install script
       command: /tmp/get-helm-3
+
+- name: Install python3-openshift
+  block:
+    - name: Ensure pip is installed
+      apt: 
+        name: python3-pip
+        state: present
+
+    - name: Install openshift using pip
+      pip:
+        name: openshift
+        executable: pip3
