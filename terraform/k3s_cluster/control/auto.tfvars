@@ -1,5 +1,5 @@
 variable "template_name" {
-    default = "master-k3s"
+    default = "k3s-node"
 }
 
 variable "proxmox_host" {
