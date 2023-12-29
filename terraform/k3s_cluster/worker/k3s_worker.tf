@@ -56,10 +56,10 @@ EOF
   agent = 1 # 1 = true, 0 = false (default)
   scsihw = "virtio-scsi-pci"
   os_type = "cloud-init"
-  cores = 4
+  cores = 12
   sockets = 1
   cpu = "host"
-  memory = 8192
+  memory = 24576
 
   # Tagging the VMs
   tags = "k3s"

@@ -77,7 +77,7 @@ EOF
   }
 
   # VM Cloudinit Settings
-  cloudinit_cdrom_storage = "cluster-zfs" # name of your proxmox storage
+  cloudinit_cdrom_storage = "local-zfs" # name of your proxmox storage
   ciuser = var.admin_user
   cipassword = var.admin_password
   sshkeys = <<EOF
