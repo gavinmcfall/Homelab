@@ -58,7 +58,7 @@ source "proxmox-iso" "ubuntu-server-jammy" {
     scsi_controller = "virtio-scsi-pci"
 
     disks {
-        disk_size = "60G"
+        disk_size = "120G"
         format = "raw"
         storage_pool = "local-zfs"
         type = "virtio"
@@ -66,10 +66,10 @@ source "proxmox-iso" "ubuntu-server-jammy" {
     }
 
     # VM CPU Settings
-    cores = "4"
+    cores = "12"
     
     # VM Memory Settings
-    memory = "8192" 
+    memory = "24576" 
 
     # VM Network Settings
     network_adapters {

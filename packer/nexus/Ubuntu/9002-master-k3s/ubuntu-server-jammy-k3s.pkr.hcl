@@ -60,7 +60,7 @@ source "proxmox-iso" "ubuntu-server-jammy" {
     disks {
         disk_size = "120G"
         format = "raw"
-        storage_pool = "cluster-zfs"
+        storage_pool = "local-zfs"
         type = "virtio"
         discard = "true"
     }
@@ -80,7 +80,7 @@ source "proxmox-iso" "ubuntu-server-jammy" {
 
     # VM Cloud-Init Settings
     cloud_init = false # Enable Cloud-Init
-    cloud_init_storage_pool = "cluster-zfs"
+    cloud_init_storage_pool = "local-zfs"
 
     # PACKER Boot Commands
     boot_command = [
