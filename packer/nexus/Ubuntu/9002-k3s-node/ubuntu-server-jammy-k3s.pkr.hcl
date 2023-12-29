@@ -37,7 +37,7 @@ source "proxmox-iso" "ubuntu-server-jammy" {
     node = "${var.proxmox_node}"
     vm_id = "9002"
     vm_name = var.template_name
-    template_description = "Ubuntu Server Jammy (22.04) Image for k3s Master"
+    template_description = "Ubuntu Server Jammy (22.04) Image for k3s Node"
 
     # VM OS Settings
     # (Option 1) Local ISO File

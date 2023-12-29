@@ -6,7 +6,7 @@ proxmox_api_token_id = "packer@pam!Infrastructure"
 proxmox_api_token_secret = "cc51741d-4706-4fd4-ac22-687740038591"
 
 # Template Name
-template_name = "master-k3s"
+template_name = "k3s-node"
 
 # ProxMox node
 proxmox_node = "nexus"

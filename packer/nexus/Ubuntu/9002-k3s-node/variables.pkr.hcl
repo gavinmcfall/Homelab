@@ -6,7 +6,7 @@ proxmox_api_token_id = "{{ op://homelab/Proxmox-Users/Packer/Packer-Token-ID }}"
 proxmox_api_token_secret = "{{ op://homelab/Proxmox-Users/Packer/Packer-Secret }}"
 
 # Template Name
-template_name = "agent-k3s"
+template_name = "k3s-node"
 
 # ProxMox node
 proxmox_node = "nexus"
