@@ -37,7 +37,7 @@
 # Regenerate Image
 
 # Turn the VM Into a tempalte 
-qm template 9000
+    qm template 9000
 
 # Add the CIFS Disk on cluster-zfs 250G
 # Clone the VM
@@ -50,7 +50,17 @@ qm template 9000
 # ssh into it
 
 # Update and install QEMU Guest Agent
-sudo apt update
-sudo apt install -y qemu-guest-agent
-sudo reboot
+    sudo apt update
+    sudo apt install -y qemu-guest-agent
+    sudo reboot
+
+# Attaching Physical Disks
+
+    # Finding the disk IDs
+        find /dev/disk/by-id/ -type l|xargs -I{} ls -l {}|grep -v -E '[0-9]$' |sort -k11|cut -d' ' -f9,10,11,12
+
+    # Attaching the disk to the VM
+        qm set vmID type DiskID
+        qm set 111 -scsi0 /dev/disk/by-id/scsi-35002538f4372f436
+
 ```
