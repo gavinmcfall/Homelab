@@ -11,6 +11,11 @@
     flux reconcile source git home-kubernetes -n flux-system
 ```
 
+## rClone Manual Sync
+```bash
+    rclone sync --max-age=30h /mnt/proxmox-backups/ backblaze:harbourside-proxmox-backups/ -P
+```
+
 ## Kube ctl commands
 
 ```bash
