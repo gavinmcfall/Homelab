@@ -25,6 +25,14 @@
         export KUBECONFIG=~/.kube/config:~/k3s.yaml
         sed -i 's/server: https:\/\/127.0.0.1:6443/server: https:\/\/10.90.3.100:6443/g' ~/.kube/config
 
+    # Draining/Cordoning and Uncordoning
+        # Drain and Cordone
+            kubectl drain node/{nodeName} --ignore-daemonsets --delete-emptydir-data --force
+        # Uncordone
+            kubectl uncordon node/{nodeName}
+
+
+
 ```
 
 ## Mounting cifs shares
