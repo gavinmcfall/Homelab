@@ -5,6 +5,11 @@
     https://kubernetes.io/docs/reference/kubectl/quick-reference/
 ```
 
+## AWS CLI - Remove contents of a bucket
+```bash
+    aws s3 rm s3://<bucket-name> --endpoint-url https://<cloudflare-id>.r2.cloudflarestorage.com --recursive --dryrun
+```
+
 ## Flux reconcile
 
 ```bash
