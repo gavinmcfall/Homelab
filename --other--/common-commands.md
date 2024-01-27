@@ -142,3 +142,15 @@
     # In Chrome
     chrome://restart
 ```
+
+## Setting Permissions on NFS Share
+
+```bash
+    # modifing for group write
+    sudo chmod -R 777 /mnt/data/
+
+    #setting kah perms
+    sudo setfacl -Rm g:10000:rwx /mnt/data/
+    sudo setfacl -Rm u:568:rwx,g:568:rwx /mnt/data/
+
+```
