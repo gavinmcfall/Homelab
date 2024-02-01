@@ -3,6 +3,10 @@
 ```bash
     # Kubectl Cheat Cheat
     https://kubernetes.io/docs/reference/kubectl/quick-reference/
+
+    # Fix k9s when it has a fit
+    sudo rm -R ~/home/gavin/.local/share/k9s/clusters
+    k9s
 ```
 
 ## AWS CLI - Remove contents of a bucket
