@@ -20,3 +20,6 @@ do
     fi
 done
 ```
+
+
+./audio_info.sh -l "/mnt/data/Library/Anime/One Piece (1999) {imdb-tt0388629}/Season 01"

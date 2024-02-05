@@ -26,6 +26,13 @@
     rclone sync --max-age=30h /mnt/proxmox-backups/ backblaze:harbourside-proxmox-backups/ -P
 ```
 
+# Backblaze manual upload
+
+```bash
+    b2 upload-file steam-backups /path/to/file/<fileName> <folderName>/<fileName>
+```
+
+
 ## Kube ctl commands
 
 ```bash
