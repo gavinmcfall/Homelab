@@ -9,6 +9,12 @@
     k9s
 ```
 
+## Unlocking Volsync
+```bash
+    # This is an example, swap out the namespace and secret name as needed
+    task volsync:unlock NS=downloads REPO=sabnzbd-volsync-r2-secret
+```
+
 ## AWS CLI - Remove contents of a bucket
 ```bash
     aws s3 rm s3://<bucket-name> --endpoint-url https://<cloudflare-id>.r2.cloudflarestorage.com --recursive --dryrun
@@ -41,7 +47,8 @@
         export KUBECONFIG=~/.kube/config:~/k3s.yaml
         sed -i 's/server: https:\/\/127.0.0.1:6443/server: https:\/\/10.90.3.100:6443/g' ~/.kube/config
 
-    # Draining/Cordoning and Uncordoning
+    # Draining/Cordoning and 
+    cordoning
         # Drain and Cordone
             kubectl drain node/{nodeName} --ignore-daemonsets --delete-emptydir-data --force
         # Uncordone
