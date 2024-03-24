@@ -12,7 +12,7 @@
 ## Unlocking Volsync
 ```bash
     # This is an example, swap out the namespace and secret name as needed
-    task volsync:unlock NS=downloads REPO=sabnzbd-volsync-r2-secret
+    task volsync:unlock app=calibre cluster=default ns=entertainment
 ```
 
 ## AWS CLI - Remove contents of a bucket
