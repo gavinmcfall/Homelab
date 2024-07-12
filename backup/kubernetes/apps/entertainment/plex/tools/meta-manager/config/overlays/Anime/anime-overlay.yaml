@@ -1,0 +1,7 @@
+overlays:
+############################
+#         RATINGS          #
+############################
+  content-rating:
+    overlay:
+      pmm: commonsense

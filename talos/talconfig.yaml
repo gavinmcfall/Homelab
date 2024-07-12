@@ -1,0 +1,101 @@
+---
+clusterName: nerdz
+talosVersion: v1.7.5
+kubernetesVersion: v1.30.2
+endpoint: https://10.90.3.100:6443
+domain: karaka.nerdz.cloud
+allowSchedulingOnMasters: true
+allowSchedulingOnControlPlanes: true
+additionalMachineCertSans:
+  - 10.0.3.100
+additionalApiServerCertSans:
+  - nerdz.local
+clusterPodNets:
+  - 10.244.0.0/16
+clusterSvcNets:
+  - 10.96.0.0/12
+patches:
+  - |-
+    - op: add
+      path: /machine/env
+      value:
+        GRPC_GO_LOG_SEVERITY_LEVEL: error
+nodes:
+  - hostname: stanton-01
+    ipAddress: 10.90.3.101
+    controlPlane: true
+    machineSpec:
+      mode: metal
+      arch: amd64
+      useUKI: false
+      secureboot: false
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/i915-ucode
+            - siderolabs/intel-ice-firmware
+            - siderolabs/intel-ucode
+            - siderolabs/tailscale
+            - siderolabs/thunderbolt
+            - siderolabs/util-linux-tools
+    installDiskSelector:
+      size: 1TB
+      model: Samsung SSD 990 PRO 1TB
+      busPath: /pci0000:00/0000:00:1c.4/0000:58:00.0/nvme/nvme1/nvme1n1
+    disableSearchDomain: true
+    nameservers:
+      - 1.1.1.1
+      - 8.8.8.8
+  - hostname: stanton-02
+    ipAddress: 10.90.3.102
+    controlPlane: true
+    machineSpec:
+      mode: metal
+      arch: amd64
+      useUKI: false
+      secureboot: false
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/i915-ucode
+            - siderolabs/intel-ice-firmware
+            - siderolabs/intel-ucode
+            - siderolabs/tailscale
+            - siderolabs/thunderbolt
+            - siderolabs/util-linux-tools
+    installDiskSelector:
+      size: 1TB
+      model: Samsung SSD 990 PRO 1TB
+      busPath: /pci0000:00/0000:00:1c.4/0000:58:00.0/nvme/nvme1/nvme1n1
+    disableSearchDomain: true
+    nameservers:
+      - 1.1.1.1
+      - 8.8.8.8
+  - hostname: stanton-03
+    ipAddress: 10.90.3.103
+    controlPlane: true
+    machineSpec:
+      mode: metal
+      arch: amd64
+      useUKI: false
+      secureboot: false
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/i915-ucode
+            - siderolabs/intel-ice-firmware
+            - siderolabs/intel-ucode
+            - siderolabs/tailscale
+            - siderolabs/thunderbolt
+            - siderolabs/util-linux-tools
+    installDiskSelector:
+      size: 1TB
+      model: Samsung SSD 990 PRO 1TB
+      busPath: /pci0000:00/0000:00:1c.4/0000:58:00.0/nvme/nvme0/nvme0n1
+    disableSearchDomain: true
+    nameservers:
+      - 1.1.1.1
+      - 8.8.8.8
