@@ -10,12 +10,14 @@
 ```
 
 ## Unlocking Volsync
+
 ```bash
     # This is an example, swap out the namespace and secret name as needed
-    task volsync:unlock app=calibre cluster=default ns=entertainment
+    task volsync:unlock app=calibre cluster=admin@home-kubernetes ns=entertainment
 ```
 
 ## AWS CLI - Remove contents of a bucket
+
 ```bash
     aws s3 rm s3://<bucket-name> --endpoint-url https://<cloudflare-id>.r2.cloudflarestorage.com --recursive --dryrun
 ```
@@ -38,7 +40,6 @@
     b2 upload-file steam-backups /path/to/file/<fileName> <folderName>/<fileName>
 ```
 
-
 ## Kube ctl commands
 
 ```bash
@@ -47,7 +48,7 @@
         export KUBECONFIG=~/.kube/config:~/k3s.yaml
         sed -i 's/server: https:\/\/127.0.0.1:6443/server: https:\/\/10.90.3.100:6443/g' ~/.kube/config
 
-    # Draining/Cordoning and 
+    # Draining/Cordoning and
     cordoning
         # Drain and Cordone
             kubectl drain node/{nodeName} --ignore-daemonsets --delete-emptydir-data --force
@@ -82,7 +83,7 @@
 
     # Initilize and upgrade plugins
         packer init -upgrade
-    
+
     #  Building a packer VM Template (need to be in the correct dir: /Homelab/packer/nexus/9001-ubuntu-server-jammy-k3s)
         packer build -var-file='./variables.pkr.hcl' ./ubuntu-server-jammy-k3s.pkr.hcl
 ```
@@ -95,14 +96,14 @@
 
     #  Terraform validate
         terraform validate # this will validate your terraform plan
-    
+
     #  Testing your terraform plan ans saving the plan to a file
         terraform plan -out=plan.out
-    
+
     #  Running your terraform plan
         terraform apply "plan.out"
         terraform apply -auto-approve "plan.out" # wont ask permission to do anything, runs unattended
-    
+
     #  Destroy the VMs you built
         terraform destroy
         terraform destroy -auto-approve # wont ask permission to do anything, runs unattended
@@ -121,11 +122,11 @@
     # Syntax notes
         # Validate playbook before running (note some tasks ignore check)
             --check
-    
+
     # K3S - Run from /ansible/main
         # Preparing nodes
             ansible-playbook -i ./Inventory ./playbooks/cluster-prepare.yaml --vault-password-file ../secrets/passwd_files/harbourside.pass
-    
+
     # MANAGEMENT - Run from ~/Homelab/ansible/management
         # Power State
             # Start
@@ -135,10 +136,10 @@
             # Shutdown
                 ansible-playbook -i ./Inventory ./playbooks/power-shutdown-k3s.yaml
         # Update Ubuntu
-            ansible-playbook -i ./Inventory ./playbooks/update-apt-packages.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass    
+            ansible-playbook -i ./Inventory ./playbooks/update-apt-packages.yaml --vault-password-file ./secrets/passwd_files/harbourside.pass
 
     # Editing a Vault - Run from ~/Homelab/ansible
-        ansible-vault edit --vault-password-file ./secrets/passwd_files/harbourside.pass ./secrets/vaults/harbourside.yml 
+        ansible-vault edit --vault-password-file ./secrets/passwd_files/harbourside.pass ./secrets/vaults/harbourside.yml
 ```
 
 ## SOPS Encryption
@@ -156,7 +157,7 @@
 ```bash
     # In Windows
     Internet Options > Content > Clear SSL State
-    
+
     # In Chrome
     chrome://restart
 ```
