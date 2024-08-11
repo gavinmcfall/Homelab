@@ -9,6 +9,13 @@
     k9s
 ```
 
+## refreshing a Onepassword-Connect Secret
+
+```bash
+    # To find the secret name use k9s to look for :externalsecret
+    kubectl --namespace home annotate externalsecret homepage force-sync=$(date +%s) --overwrite
+```
+
 ## Unlocking Volsync
 
 ```bash
