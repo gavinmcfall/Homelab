@@ -9,6 +9,12 @@
     k9s
 ```
 
+## Git pulling all subdirectories
+
+```bash
+    find ~/cloned-repos/homelab-repos -type d -name ".git" -execdir git pull \;
+```
+
 ## refreshing a Onepassword-Connect Secret
 
 ```bash
