@@ -48,3 +48,8 @@
 
 1. Setup Snipd
 2. Get Snipd Highlights syncing to obsidian
+
+## Shell History
+
+1. [https://docs.atuin.sh/self-hosting/server-setup/](https://docs.atuin.sh/self-hosting/server-setup/)
+2. [https://github.com/atuinsh/atuin](https://github.com/atuinsh/atuin)
