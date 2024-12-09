@@ -47,7 +47,7 @@
     rclone sync --max-age=30h /mnt/proxmox-backups/ backblaze:harbourside-proxmox-backups/ -P
 ```
 
-# Backblaze manual upload
+## Backblaze manual upload
 
 ```bash
     b2 upload-file steam-backups /path/to/file/<fileName> <folderName>/<fileName>
@@ -56,10 +56,6 @@
 ## Kube ctl commands
 
 ```bash
-    # Fixing Kube config after a fresh install
-        scp k3sadmin@10.90.3.101:/etc/rancher/k3s/k3s.yaml ~/k3s.yaml
-        export KUBECONFIG=~/.kube/config:~/k3s.yaml
-        sed -i 's/server: https:\/\/127.0.0.1:6443/server: https:\/\/10.90.3.100:6443/g' ~/.kube/config
 
     # Draining/Cordoning and
     cordoning
