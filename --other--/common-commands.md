@@ -22,6 +22,12 @@
     kubectl --namespace home annotate externalsecret homepage force-sync=$(date +%s) --overwrite
 ```
 
+## Starting a privileged container on the node (No SSH on TalosOS)
+
+```bash
+    task kubernetes:privileged node={your nodes names}
+```
+
 ## Unlocking Volsync
 
 ```bash
