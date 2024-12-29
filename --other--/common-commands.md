@@ -28,6 +28,14 @@
     task kubernetes:privileged node={your nodes names}
 ```
 
+## Getting a unique Mac address for a container
+```bash
+
+    # generate reproducible "locally assigned" (aka non-vendor-assigned) MAC address from a FQDN (aka for Home Assistant Multus)
+    echo $FQDN|md5sum|sed 's/^\(..\)\(..\)\(..\)\(..\)\(..\).*$/02:\1:\2:\3:\4:\5/'
+    # source: https://serverfault.com/questions/299556/how-to-generate-a-random-mac-address-from-the-linux-command-line/299563#299563
+```
+
 ## Unlocking Volsync
 
 ```bash
