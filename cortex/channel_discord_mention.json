@@ -1,0 +1,205 @@
+{
+  "name": "Channel - Discord Mention Ingest",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1a2b3c4d-discord-trigger",
+      "name": "Discord Mention Trigger",
+      "type": "n8n-nodes-base.discordTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "discord-mention-webhook",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "discord-credentials",
+          "name": "Discord Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.guild_id}}",
+              "value2": "1175866333829791814",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "2b3c4d5e-server-filter",
+      "name": "Filter Server",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.channel_id}}",
+              "value2": "1374274241888784384",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "3c4d5e6f-channel-filter",
+      "name": "Filter Channel",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.content}}",
+              "value2": "bot",
+              "operation": "contains"
+            }
+          ]
+        }
+      },
+      "id": "4d5e6f7g-mention-check",
+      "name": "Check Bot Mention",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const normalizedEvent = {\n  channel: \"discord_channel\",\n  modality: \"text\",\n  content: $json.content,\n  metadata: {\n    userId: $json.author.id,\n    username: $json.author.username,\n    messageId: $json.id,\n    channelId: $json.channel_id,\n    guildId: $json.guild_id,\n    timestamp: new Date().toISOString(),\n    originalMessage: $json\n  }\n};\n\nreturn normalizedEvent;"
+      },
+      "id": "5e6f7g8h-normalize",
+      "name": "Normalize Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "discord_events",
+        "columns": "channel,modality,content,metadata,created_at",
+        "values": "={{$json.channel}},={{$json.modality}},={{$json.content}},={{JSON.stringify($json.metadata)}},={{new Date().toISOString()}}"
+      },
+      "id": "6f7g8h9i-postgres-store",
+      "name": "Store in Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "Postgres DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": "primary_ai_workflow"
+      },
+      "id": "7g8h9i0j-execute-primary",
+      "name": "Execute Primary AI Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Discord Channel Mention Workflow\n\nThis workflow handles bot mentions in the specified Discord channel.\n\n### Configuration:\n- Server ID: 1175866333829791814\n- Channel ID: 1374274241888784384\n- Triggers when bot is mentioned in messages\n\n### Required Credentials:\n- Discord Bot Token\n- Postgres Connection",
+        "height": 250,
+        "width": 400
+      },
+      "id": "8h9i0j1k-sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [250, 50]
+    }
+  ],
+  "connections": {
+    "Discord Mention Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter Server",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Server": {
+      "main": [
+        [
+          {
+            "node": "Filter Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Channel": {
+      "main": [
+        [
+          {
+            "node": "Check Bot Mention",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Bot Mention": {
+      "main": [
+        [
+          {
+            "node": "Normalize Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Event": {
+      "main": [
+        [
+          {
+            "node": "Store in Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Postgres": {
+      "main": [
+        [
+          {
+            "node": "Execute Primary AI Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error_handler_workflow"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

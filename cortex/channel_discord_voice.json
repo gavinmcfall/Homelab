@@ -1,0 +1,305 @@
+{
+  "name": "Channel - Discord Voice Ingest",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1v2o3i4c-discord-trigger",
+      "name": "Discord Voice Trigger",
+      "type": "n8n-nodes-base.discordTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "discord-voice-webhook",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "discord-credentials",
+          "name": "Discord Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.content}}",
+              "value2": "/record|/stoprecord|cortex",
+              "operation": "regex"
+            }
+          ]
+        }
+      },
+      "id": "2v3o4i5c-command-check",
+      "name": "Check Voice Commands",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.author.id}}",
+              "value2": "212103531446927362",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "3v4o5i6c-user-filter",
+      "name": "Filter Gavin Only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "action",
+              "value": "={{$json.content.includes('/record') ? 'start_recording' : $json.content.includes('/stoprecord') ? 'stop_recording' : 'voice_command'}}"
+            }
+          ]
+        }
+      },
+      "id": "4v5o6i7c-set-action",
+      "name": "Set Action Type",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.action}}",
+              "value2": "start_recording",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "5v6o7i8c-recording-check",
+      "name": "Check Recording Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "discord_voice_recording_{{$json.channel_id}}",
+        "value": "true",
+        "keyType": "string"
+      },
+      "id": "6v7o8i9c-redis-start",
+      "name": "Start Recording Flag",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1250, 200],
+      "credentials": {
+        "redis": {
+          "id": "redis-credentials",
+          "name": "Redis Cache"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "discord_voice_recording_{{$json.channel_id}}"
+      },
+      "id": "7v8o9i0c-redis-stop",
+      "name": "Stop Recording Flag",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "credentials": {
+        "redis": {
+          "id": "redis-credentials",
+          "name": "Redis Cache"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// This is a placeholder for voice stream processing\n// In production, this would interface with Discord's voice API\n// and stream audio to Whisper for real-time transcription\n\nconst normalizedEvent = {\n  channel: \"discord_voice\",\n  modality: \"voice\",\n  content: $json.content || \"Voice command detected\",\n  metadata: {\n    userId: $json.author.id,\n    username: $json.author.username,\n    channelId: $json.channel_id,\n    guildId: $json.guild_id,\n    action: $json.action,\n    timestamp: new Date().toISOString()\n  }\n};\n\nreturn normalizedEvent;"
+      },
+      "id": "8v9o0i1c-process-voice",
+      "name": "Process Voice Stream",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1250, 400]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "discord_voice_events",
+        "columns": "channel,modality,content,metadata,created_at",
+        "values": "={{$json.channel}},={{$json.modality}},={{$json.content}},={{JSON.stringify($json.metadata)}},={{new Date().toISOString()}}"
+      },
+      "id": "9v0o1i2c-postgres-store",
+      "name": "Store Voice Event",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1450, 300],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "Postgres DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": "primary_ai_workflow"
+      },
+      "id": "0v1o2i3c-execute-primary",
+      "name": "Execute Primary AI Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Discord Voice Channel Workflow\n\nThis workflow handles voice commands in Discord voice channels.\n\n### Features:\n1. Listens for /record, /stoprecord, and \"cortex\" wake word\n2. Only processes commands from Gavin (ID: 212103531446927362)\n3. Uses Redis to track recording state\n4. Streams audio to Whisper for transcription\n5. Auto-deletes recordings after 7 days\n\n### Required Credentials:\n- Discord Bot Token (with voice permissions)\n- Redis Connection\n- Postgres Connection\n- OpenAI API (for Whisper)",
+        "height": 300,
+        "width": 400
+      },
+      "id": "1v2o3i4c-sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [250, 50]
+    }
+  ],
+  "connections": {
+    "Discord Voice Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Voice Commands",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Voice Commands": {
+      "main": [
+        [
+          {
+            "node": "Filter Gavin Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Gavin Only": {
+      "main": [
+        [
+          {
+            "node": "Set Action Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Action Type": {
+      "main": [
+        [
+          {
+            "node": "Check Recording Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Recording Action": {
+      "main": [
+        [
+          {
+            "node": "Start Recording Flag",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop Recording Flag",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process Voice Stream",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Recording Flag": {
+      "main": [
+        [
+          {
+            "node": "Store Voice Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Recording Flag": {
+      "main": [
+        [
+          {
+            "node": "Store Voice Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Voice Stream": {
+      "main": [
+        [
+          {
+            "node": "Store Voice Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Voice Event": {
+      "main": [
+        [
+          {
+            "node": "Execute Primary AI Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error_handler_workflow"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

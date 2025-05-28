@@ -1,0 +1,292 @@
+{
+  "name": "Channel - Telegram Ingest",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1t2e3l4g-telegram-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "telegram-webhook",
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-credentials",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.message.from.username}}",
+              "value2": "nzvengeance",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "2t3e4l5g-filter-user",
+      "name": "Filter Gavin Only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.message.voice ? true : false}}",
+              "value2": true,
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "id": "3t4e5l6g-voice-check",
+      "name": "Check for Voice Message",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "getFile",
+        "fileId": "={{$json.message.voice.file_id}}"
+      },
+      "id": "4t5e6l7g-get-voice-file",
+      "name": "Get Voice File",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-credentials",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$json.file_path}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "5t6e7l8g-download-voice",
+      "name": "Download Voice File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{$binary.data}}"
+            },
+            {
+              "name": "model",
+              "value": "whisper-1"
+            }
+          ]
+        }
+      },
+      "id": "6t7e8l9g-whisper-stt",
+      "name": "Whisper STT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1250, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openai-credentials",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const isVoice = $json.message?.voice ? true : false;\nconst content = isVoice ? $input.all()[1].json.text : $json.message.text;\n\nconst normalizedEvent = {\n  channel: \"telegram\",\n  modality: isVoice ? \"voice\" : \"text\",\n  content: content,\n  metadata: {\n    userId: $json.message.from.id,\n    username: $json.message.from.username,\n    chatId: $json.message.chat.id,\n    messageId: $json.message.message_id,\n    timestamp: new Date().toISOString(),\n    originalMessage: $json\n  }\n};\n\nif (isVoice) {\n  normalizedEvent.metadata.voiceFileId = $json.message.voice.file_id;\n}\n\nreturn normalizedEvent;"
+      },
+      "id": "7t8e9l0g-normalize",
+      "name": "Normalize Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "telegram_events",
+        "columns": "channel,modality,content,metadata,created_at",
+        "values": "={{$json.channel}},={{$json.modality}},={{$json.content}},={{JSON.stringify($json.metadata)}},={{new Date().toISOString()}}"
+      },
+      "id": "8t9e0l1g-postgres-store",
+      "name": "Store in Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1650, 300],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "Postgres DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": "primary_ai_workflow"
+      },
+      "id": "9t0e1l2g-execute-primary",
+      "name": "Execute Primary AI Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Telegram Ingest Workflow\n\nThis workflow handles incoming Telegram messages from Gavin.\n\n### Configuration:\n- Username: @nzvengeance\n- Bot: @cortexaitelegram_bot\n\n### Features:\n1. Filters to only process messages from @nzvengeance\n2. Handles both text and voice messages\n3. Voice messages are transcribed using Whisper\n4. All messages are normalized and stored\n\n### Required Credentials:\n- Telegram Bot Token\n- OpenAI API (for Whisper)\n- Postgres Connection",
+        "height": 300,
+        "width": 400
+      },
+      "id": "0t1e2l3g-sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [250, 50]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter Gavin Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Gavin Only": {
+      "main": [
+        [
+          {
+            "node": "Check for Voice Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Voice Message": {
+      "main": [
+        [
+          {
+            "node": "Get Voice File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalize Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Voice File": {
+      "main": [
+        [
+          {
+            "node": "Download Voice File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Voice File": {
+      "main": [
+        [
+          {
+            "node": "Whisper STT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whisper STT": {
+      "main": [
+        [
+          {
+            "node": "Normalize Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Event": {
+      "main": [
+        [
+          {
+            "node": "Store in Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Postgres": {
+      "main": [
+        [
+          {
+            "node": "Execute Primary AI Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error_handler_workflow"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

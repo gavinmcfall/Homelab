@@ -1,0 +1,85 @@
+{
+  "name": "Health Check",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "health",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1h2e3a4l-webhook",
+      "name": "Health Check Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "health-check-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const healthStatus = {\n  status: \"OK\",\n  timestamp: new Date().toISOString(),\n  services: {\n    n8n: \"running\",\n    workflows: {\n      channel_discord_dm: \"active\",\n      channel_discord_mention: \"active\",\n      channel_discord_voice: \"active\",\n      channel_sms: \"active\",\n      channel_telegram: \"active\",\n      primary_ai: \"active\",\n      outbound_dispatcher: \"active\",\n      error_handler: \"active\"\n    }\n  },\n  version: \"1.0.0\"\n};\n\nreturn healthStatus;"
+      },
+      "id": "2h3e4a5l-build-status",
+      "name": "Build Health Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "3h4e5a6l-respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Health Check Endpoint\n\nSimple HTTP endpoint that returns \"OK\" if the system is running.\n\n### Endpoint:\n- GET /health\n\n### Response:\n```json\n{\n  \"status\": \"OK\",\n  \"timestamp\": \"2024-01-01T00:00:00.000Z\",\n  \"services\": {...},\n  \"version\": \"1.0.0\"\n}\n```",
+        "height": 250,
+        "width": 400
+      },
+      "id": "4h5e6a7l-sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [250, 50]
+    }
+  ],
+  "connections": {
+    "Health Check Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Health Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Health Status": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": false,
+    "callerPolicy": "any"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

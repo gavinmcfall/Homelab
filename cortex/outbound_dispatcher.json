@@ -1,0 +1,470 @@
+{
+  "name": "Outbound Dispatcher",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dispatch-response",
+        "options": {}
+      },
+      "id": "1o2u3t4b-webhook",
+      "name": "Dispatch Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 500],
+      "webhookId": "outbound-dispatcher-webhook"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "channel",
+              "value": "={{$json.response.channel}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2o3u4t5b-channel-router",
+      "name": "Channel Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [450, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.response.modality}}",
+              "value2": "voice",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "3o4u5t6b-discord-modality",
+      "name": "Discord Modality Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/text-to-speech/{{$credentials.voiceId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "xi-api-key",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{$json.response.content}}"
+            },
+            {
+              "name": "model_id",
+              "value": "eleven_monolingual_v1"
+            },
+            {
+              "name": "voice_settings",
+              "value": "{\"stability\": 0.5, \"similarity_boost\": 0.5}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "4o5u6t7b-elevenlabs-tts",
+      "name": "ElevenLabs TTS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "elevenlabs-credentials",
+          "name": "ElevenLabs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "send",
+        "userId": "={{$json.response.metadata.userId}}",
+        "text": "={{$json.response.content}}"
+      },
+      "id": "5o6u7t8b-discord-text",
+      "name": "Discord Text Reply",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "discord-credentials",
+          "name": "Discord Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "send",
+        "channelId": "={{$json.response.metadata.channelId}}",
+        "file": "={{$binary.data}}"
+      },
+      "id": "6o7u8t9b-discord-voice",
+      "name": "Discord Voice Reply",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 1,
+      "position": [1050, 100],
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "discord-credentials",
+          "name": "Discord Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendSms",
+        "from": "+447476550411",
+        "to": "={{$json.response.metadata.fromNumber}}",
+        "message": "={{$json.response.content}}"
+      },
+      "id": "7o8u9t0b-twilio-sms",
+      "name": "Twilio SMS Reply",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [650, 400],
+      "credentials": {
+        "twilioApi": {
+          "id": "twilio-credentials",
+          "name": "Twilio API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.response.modality}}",
+              "value2": "voice",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "8o9u0t1b-telegram-modality",
+      "name": "Telegram Modality Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 600]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{$json.response.metadata.chatId}}",
+        "text": "={{$json.response.content}}"
+      },
+      "id": "9o0u1t2b-telegram-text",
+      "name": "Telegram Text Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 700],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-credentials",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/text-to-speech/{{$credentials.voiceId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "xi-api-key",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{$json.response.content}}"
+            },
+            {
+              "name": "model_id",
+              "value": "eleven_monolingual_v1"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "0o1u2t3b-elevenlabs-tg-tts",
+      "name": "ElevenLabs TTS Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 500],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "elevenlabs-credentials",
+          "name": "ElevenLabs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendAudio",
+        "chatId": "={{$json.response.metadata.chatId}}",
+        "file": "={{$binary.data}}"
+      },
+      "id": "1o2u3t4b-telegram-voice",
+      "name": "Telegram Voice Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1050, 500],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-credentials",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "outbound_logs",
+        "columns": "channel,modality,content,metadata,status,created_at",
+        "values": "={{$json.response.channel}},={{$json.response.modality}},={{$json.response.content}},={{JSON.stringify($json.response.metadata)}},success,={{new Date().toISOString()}}"
+      },
+      "id": "2o3u4t5b-log-success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1250, 500],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "Postgres DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Outbound Dispatcher Workflow\n\nThis workflow routes responses back to users through the correct channel.\n\n### Channel Support:\n1. **Discord DM/Channel**: Text and voice (via TTS)\n2. **SMS**: Text only via Twilio\n3. **Telegram**: Text and voice (via TTS)\n\n### Voice Handling:\n- Uses ElevenLabs TTS for voice responses\n- Discord: Sends as audio file\n- Telegram: Sends as voice message\n- SMS: Falls back to text only\n\n### Required Credentials:\n- Discord Bot Token\n- Twilio API (SID & Auth Token)\n- Telegram Bot Token\n- ElevenLabs API\n- Postgres Connection",
+        "height": 350,
+        "width": 400
+      },
+      "id": "3o4u5t6b-sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [250, 50]
+    }
+  ],
+  "connections": {
+    "Dispatch Webhook": {
+      "main": [
+        [
+          {
+            "node": "Channel Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Channel Router": {
+      "main": [
+        [
+          {
+            "node": "Discord Modality Check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord Modality Check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Twilio SMS Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Modality Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord Modality Check": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs TTS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord Text Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs TTS": {
+      "main": [
+        [
+          {
+            "node": "Discord Voice Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord Text Reply": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord Voice Reply": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio SMS Reply": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Modality Check": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs TTS Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Text Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs TTS Telegram": {
+      "main": [
+        [
+          {
+            "node": "Telegram Voice Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Text Reply": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Voice Reply": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error_handler_workflow"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

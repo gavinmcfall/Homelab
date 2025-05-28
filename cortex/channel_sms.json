@@ -1,0 +1,193 @@
+{
+  "name": "Channel - SMS Ingest",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sms-webhook",
+        "options": {}
+      },
+      "id": "1s2m3s4w-webhook",
+      "name": "Twilio SMS Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "twilio-sms-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body.From}}",
+              "value2": "+6421467267",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "2s3m4s5w-filter-number",
+      "name": "Filter Gavin's Number",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const normalizedEvent = {\n  channel: \"sms\",\n  modality: \"text\",\n  content: $json.body.Body,\n  metadata: {\n    fromNumber: $json.body.From,\n    toNumber: $json.body.To,\n    messageId: $json.body.MessageSid,\n    timestamp: new Date().toISOString(),\n    originalMessage: $json.body\n  }\n};\n\nreturn normalizedEvent;"
+      },
+      "id": "3s4m5s6w-normalize",
+      "name": "Normalize SMS Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "sms_events",
+        "columns": "channel,modality,content,metadata,created_at",
+        "values": "={{$json.channel}},={{$json.modality}},={{$json.content}},={{JSON.stringify($json.metadata)}},={{new Date().toISOString()}}"
+      },
+      "id": "4s5m6s7w-postgres-store",
+      "name": "Store in Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "Postgres DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://qdrant.nerdz.cloud/collections/conversations/points",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "points",
+              "value": "[{\"id\": \"{{$json.metadata.messageId}}\", \"vector\": null, \"payload\": {{JSON.stringify($json)}}}]"
+            }
+          ]
+        }
+      },
+      "id": "5s6m7s8w-qdrant-embed",
+      "name": "Embed in Qdrant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "qdrant-credentials",
+          "name": "Qdrant API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": "primary_ai_workflow"
+      },
+      "id": "6s7m8s9w-execute-primary",
+      "name": "Execute Primary AI Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "content": "## SMS Ingest Workflow\n\nThis workflow handles incoming SMS messages via Twilio.\n\n### Configuration:\n- Twilio Number (AI): +44 7476 550411\n- Gavin's Number: +64 21 467 267\n- Webhook Path: /sms-webhook\n\n### Features:\n1. Receives Twilio webhook POST requests\n2. Filters to only process messages from Gavin\n3. Normalizes SMS data\n4. Stores in Postgres and embeds in Qdrant\n\n### Required Credentials:\n- Twilio Account SID & Auth Token (for webhook validation)\n- Postgres Connection\n- Qdrant API Key",
+        "height": 300,
+        "width": 400
+      },
+      "id": "7s8m9s0w-sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [250, 50]
+    }
+  ],
+  "connections": {
+    "Twilio SMS Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter Gavin's Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Gavin's Number": {
+      "main": [
+        [
+          {
+            "node": "Normalize SMS Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize SMS Event": {
+      "main": [
+        [
+          {
+            "node": "Store in Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Postgres": {
+      "main": [
+        [
+          {
+            "node": "Embed in Qdrant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed in Qdrant": {
+      "main": [
+        [
+          {
+            "node": "Execute Primary AI Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error_handler_workflow"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

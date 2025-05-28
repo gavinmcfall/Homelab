@@ -1,0 +1,14 @@
+{
+  "name": "Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1e2r3r4o-error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const error = $json.execution.error;\nconst workflow = $json.workflow;\n\nconst errorSummary = {\n  workflow: workflow.name,\n  workflowId: workflow.id,\n  errorType: error.name || 'Unknown Error',\n  errorMessage: error.message,\n  errorNode: error.node?.name || 'Unknown Node',\n  timestamp: new Date().toISOString(),\n  executionId: $json.execution.id,\n  executionUrl: $json.execution.url,\n  fullError: error\n};\n\nreturn errorSummary;"

@@ -1,0 +1,724 @@
+{
+  "name": "Primary AI Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-process",
+        "options": {}
+      },
+      "id": "1p2r3i4m-webhook",
+      "name": "AI Process Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 500],
+      "webhookId": "primary-ai-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract conversation context\nconst event = $json;\nconst conversationId = `${event.channel}_${event.metadata.userId}_${new Date().toISOString().split('T')[0]}`;\n\nreturn {\n  ...event,\n  conversationId,\n  contextKeys: {\n    zepSessionId: conversationId,\n    qdrantFilter: {\n      must: [\n        {\n          key: \"metadata.userId\",\n          match: { value: event.metadata.userId }\n        }\n      ]\n    }\n  }\n};"
+      },
+      "id": "2p3r4i5m-prepare-context",
+      "name": "Prepare Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 500]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://zep.nerdz.cloud/api/v1/sessions/{{$json.conversationId}}/memory",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$credentials.apiKey}}"
+            }
+          ]
+        }
+      },
+      "id": "3p4r5i6m-zep-memory",
+      "name": "Fetch Zep Memory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zep-credentials",
+          "name": "Zep API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://qdrant.nerdz.cloud/collections/conversations/points/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "filter",
+              "value": "={{JSON.stringify($json.contextKeys.qdrantFilter)}}"
+            },
+            {
+              "name": "limit",
+              "value": "10"
+            },
+            {
+              "name": "with_payload",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "id": "4p5r6i7m-qdrant-search",
+      "name": "Search Vector Context",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 600],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "qdrant-credentials",
+          "name": "Qdrant API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const event = $input.first().json;\nconst zepMemory = $input.all()[1].json;\nconst vectorContext = $input.all()[2].json;\n\n// Build tool schemas\nconst tools = [\n  {\n    type: \"function\",\n    function: {\n      name: \"google_calendar\",\n      description: \"Manage Google Calendar events\",\n      parameters: {\n        type: \"object\",\n        properties: {\n          action: { type: \"string\", enum: [\"create\", \"update\", \"delete\", \"list\"] },\n          data: { type: \"object\" }\n        }\n      }\n    }\n  },\n  {\n    type: \"function\",\n    function: {\n      name: \"gmail\",\n      description: \"Manage Gmail messages\",\n      parameters: {\n        type: \"object\",\n        properties: {\n          action: { type: \"string\", enum: [\"send\", \"search\", \"label\", \"archive\"] },\n          data: { type: \"object\" }\n        }\n      }\n    }\n  },\n  {\n    type: \"function\",\n    function: {\n      name: \"todoist\",\n      description: \"Manage Todoist tasks\",\n      parameters: {\n        type: \"object\",\n        properties: {\n          action: { type: \"string\", enum: [\"create\", \"update\", \"complete\", \"list\"] },\n          data: { type: \"object\" }\n        }\n      }\n    }\n  },\n  {\n    type: \"function\",\n    function: {\n      name: \"obsidian\",\n      description: \"Manage Obsidian notes\",\n      parameters: {\n        type: \"object\",\n        properties: {\n          action: { type: \"string\", enum: [\"create\", \"update\", \"search\", \"link\"] },\n          data: { type: \"object\" }\n        }\n      }\n    }\n  },\n  {\n    type: \"function\",\n    function: {\n      name: \"airtable\",\n      description: \"Manage Airtable contacts\",\n      parameters: {\n        type: \"object\",\n        properties: {\n          action: { type: \"string\", enum: [\"create\", \"update\", \"search\", \"list\"] },\n          data: { type: \"object\" }\n        }\n      }\n    }\n  },\n  {\n    type: \"function\",\n    function: {\n      name: \"google_drive\",\n      description: \"Manage Google Drive files\",\n      parameters: {\n        type: \"object\",\n        properties: {\n          action: { type: \"string\", enum: [\"upload\", \"download\", \"search\", \"share\"] },\n          data: { type: \"object\" }\n        }\n      }\n    }\n  }\n];\n\n// Build conversation context\nconst systemPrompt = `You are Cortex, Gavin McFall's personal AI assistant. You have access to his calendar, email, tasks, notes, contacts, and files. You can perform actions on his behalf and answer questions based on context and memory.\n\nPrevious conversation memory:\n${JSON.stringify(zepMemory.messages || [])}\n\nRelevant context from past conversations:\n${vectorContext.result?.map(r => r.payload?.content).join('\\n\\n') || 'No relevant context found'}\n\nCurrent channel: ${event.channel}\nCurrent modality: ${event.modality}`;\n\nconst messages = [\n  { role: \"system\", content: systemPrompt },\n  { role: \"user\", content: event.content }\n];\n\nreturn {\n  event,\n  messages,\n  tools,\n  model: \"gpt-4-turbo-preview\",\n  temperature: 0.7,\n  max_tokens: 2000\n};"
+      },
+      "id": "5p6r7i8m-build-prompt",
+      "name": "Build AI Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://litellm.nerdz.cloud/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "={{$json.model}}"
+            },
+            {
+              "name": "messages",
+              "value": "={{JSON.stringify($json.messages)}}"
+            },
+            {
+              "name": "tools",
+              "value": "={{JSON.stringify($json.tools)}}"
+            },
+            {
+              "name": "temperature",
+              "value": "={{$json.temperature}}"
+            },
+            {
+              "name": "max_tokens",
+              "value": "={{$json.max_tokens}}"
+            }
+          ]
+        }
+      },
+      "id": "6p7r8i9m-litellm-chat",
+      "name": "LiteLLM Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 500],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "litellm-credentials",
+          "name": "LiteLLM API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.choices[0].message.tool_calls ? true : false}}",
+              "value2": true,
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "id": "7p8r9i0m-check-tools",
+      "name": "Check for Tool Calls",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "const toolCalls = $json.choices[0].message.tool_calls;\nconst results = [];\n\nfor (const call of toolCalls) {\n  results.push({\n    toolName: call.function.name,\n    toolArgs: JSON.parse(call.function.arguments),\n    callId: call.id\n  });\n}\n\nreturn results;"
+      },
+      "id": "8p9r0i1m-extract-tools",
+      "name": "Extract Tool Calls",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1450, 400]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "9p0r1i2m-split-tools",
+      "name": "Split Tool Calls",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [1650, 400]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "toolName",
+              "value": "={{$json.toolName}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0p1r2i3m-tool-router",
+      "name": "Tool Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [1850, 400]
+    },
+    {
+      "parameters": {
+        "resource": "event",
+        "operation": "={{$json.toolArgs.action}}",
+        "calendarId": "primary"
+      },
+      "id": "1p2r3i4m-google-calendar",
+      "name": "Google Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [2050, 200],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "google-calendar-credentials",
+          "name": "Google Calendar"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "={{$json.toolArgs.action}}"
+      },
+      "id": "2p3r4i5m-gmail",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [2050, 300],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-credentials",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "task",
+        "operation": "={{$json.toolArgs.action}}"
+      },
+      "id": "3p4r5i6m-todoist",
+      "name": "Todoist",
+      "type": "n8n-nodes-base.todoist",
+      "typeVersion": 1,
+      "position": [2050, 400],
+      "credentials": {
+        "todoistApi": {
+          "id": "todoist-credentials",
+          "name": "Todoist"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://obsidian-api.nerdz.cloud/{{$json.toolArgs.action}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{JSON.stringify($json.toolArgs.data)}}"
+            }
+          ]
+        }
+      },
+      "id": "4p5r6i7m-obsidian",
+      "name": "Obsidian",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2050, 500],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "obsidian-credentials",
+          "name": "Obsidian API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "={{$json.toolArgs.action}}",
+        "application": "Contacts"
+      },
+      "id": "5p6r7i8m-airtable",
+      "name": "Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [2050, 600],
+      "credentials": {
+        "airtableApi": {
+          "id": "airtable-credentials",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "={{$json.toolArgs.action}}"
+      },
+      "id": "6p7r8i9m-google-drive",
+      "name": "Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [2050, 700],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "google-drive-credentials",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all tool results\nconst toolResults = $input.all().map(item => ({\n  tool_call_id: item.json.callId,\n  role: \"tool\",\n  content: JSON.stringify(item.json)\n}));\n\nreturn { toolResults };"
+      },
+      "id": "7p8r9i0m-collect-results",
+      "name": "Collect Tool Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2250, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json.choices[0].message.content;\nconst event = $input.first().json.event;\n\nreturn {\n  response: {\n    channel: event.channel,\n    modality: event.modality,\n    content: response,\n    metadata: {\n      ...event.metadata,\n      responseTimestamp: new Date().toISOString()\n    }\n  }\n};"
+      },
+      "id": "8p9r0i1m-format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1450, 600]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://zep.nerdz.cloud/api/v1/sessions/{{$json.event.conversationId}}/memory",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messages",
+              "value": "[{\"role\": \"user\", \"content\": \"{{$json.event.content}}\"}, {\"role\": \"assistant\", \"content\": \"{{$json.response.content}}\"}]"
+            }
+          ]
+        }
+      },
+      "id": "9p0r1i2m-update-zep",
+      "name": "Update Zep Memory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 700],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zep-credentials",
+          "name": "Zep API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "conversation_logs",
+        "columns": "conversation_id,request,response,tool_calls,created_at",
+        "values": "={{$json.event.conversationId}},={{JSON.stringify($json.event)}},={{JSON.stringify($json.response)}},={{JSON.stringify($json.toolResults || [])}},={{new Date().toISOString()}}"
+      },
+      "id": "0p1r2i3m-log-conversation",
+      "name": "Log Conversation",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1850, 700],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "Postgres DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": "outbound_dispatcher"
+      },
+      "id": "1p2r3i4m-execute-outbound",
+      "name": "Execute Outbound Dispatcher",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [2050, 700]
+    },
+    {
+      "parameters": {
+        "content": "## Primary AI Workflow\n\nThis is the core AI processing workflow that:\n\n### Features:\n1. Receives normalized events from channel workflows\n2. Fetches conversation memory from Zep\n3. Searches relevant context from Qdrant\n4. Builds prompt with tool schemas\n5. Calls LiteLLM (GPT-4) with tool-calling\n6. Executes tool calls:\n   - Google Calendar\n   - Gmail\n   - Todoist\n   - Obsidian\n   - Airtable\n   - Google Drive/Docs/Sheets\n7. Formats response maintaining original channel/modality\n8. Updates Zep memory and logs conversation\n9. Dispatches response back to user\n\n### Required Credentials:\n- Zep API\n- Qdrant API\n- LiteLLM API\n- Google OAuth (Calendar, Gmail, Drive)\n- Todoist API\n- Obsidian API\n- Airtable API\n- Postgres Connection",
+        "height": 400,
+        "width": 500
+      },
+      "id": "2p3r4i5m-sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [250, 50]
+    }
+  ],
+  "connections": {
+    "AI Process Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Context": {
+      "main": [
+        [
+          {
+            "node": "Fetch Zep Memory",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Vector Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Zep Memory": {
+      "main": [
+        [
+          {
+            "node": "Build AI Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Vector Context": {
+      "main": [
+        [
+          {
+            "node": "Build AI Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI Prompt": {
+      "main": [
+        [
+          {
+            "node": "LiteLLM Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LiteLLM Chat": {
+      "main": [
+        [
+          {
+            "node": "Check for Tool Calls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Tool Calls": {
+      "main": [
+        [
+          {
+            "node": "Extract Tool Calls",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Tool Calls": {
+      "main": [
+        [
+          {
+            "node": "Split Tool Calls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Tool Calls": {
+      "main": [
+        [
+          {
+            "node": "Tool Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool Router": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Todoist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Obsidian",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Collect Tool Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Collect Tool Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Todoist": {
+      "main": [
+        [
+          {
+            "node": "Collect Tool Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obsidian": {
+      "main": [
+        [
+          {
+            "node": "Collect Tool Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable": {
+      "main": [
+        [
+          {
+            "node": "Collect Tool Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Collect Tool Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Tool Results": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Update Zep Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Zep Memory": {
+      "main": [
+        [
+          {
+            "node": "Log Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Conversation": {
+      "main": [
+        [
+          {
+            "node": "Execute Outbound Dispatcher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error_handler_workflow"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

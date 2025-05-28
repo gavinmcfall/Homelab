@@ -1,0 +1,341 @@
+{
+  "name": "Channel - Discord DM Ingest",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "8f7e3a4b-discord-trigger",
+      "name": "Discord DM Trigger",
+      "type": "n8n-nodes-base.discordTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "discord-dm-webhook",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "discord-credentials",
+          "name": "Discord Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.channel_id}}",
+              "value2": "={{$json.author.id}}",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "9a8b2c3d-dm-filter",
+      "name": "Filter DMs Only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.author.id}}",
+              "value2": "212103531446927362",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "id": "1b2c3d4e-user-filter",
+      "name": "Filter Gavin Only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.attachments.length}}",
+              "value2": 0,
+              "operation": "larger"
+            }
+          ]
+        }
+      },
+      "id": "2c3d4e5f-voice-check",
+      "name": "Check for Voice Attachment",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.attachments[0].url}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "3d4e5f6g-download-voice",
+      "name": "Download Voice File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{$binary.data}}"
+            },
+            {
+              "name": "model",
+              "value": "whisper-1"
+            }
+          ]
+        }
+      },
+      "id": "4e5f6g7h-whisper-stt",
+      "name": "Whisper STT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1250, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openai-credentials",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const isVoice = $input.all()[0].json.attachments?.length > 0;\nconst content = isVoice ? $input.all()[1].json.text : $input.all()[0].json.content;\n\nconst normalizedEvent = {\n  channel: \"discord_dm\",\n  modality: isVoice ? \"voice\" : \"text\",\n  content: content,\n  metadata: {\n    userId: $input.all()[0].json.author.id,\n    username: $input.all()[0].json.author.username,\n    messageId: $input.all()[0].json.id,\n    timestamp: new Date().toISOString(),\n    originalMessage: $input.all()[0].json\n  }\n};\n\nif (isVoice) {\n  normalizedEvent.metadata.voiceFileUrl = $input.all()[0].json.attachments[0].url;\n}\n\nreturn normalizedEvent;"
+      },
+      "id": "5f6g7h8i-normalize",
+      "name": "Normalize Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "discord_events",
+        "columns": "channel,modality,content,metadata,created_at",
+        "values": "={{$json.channel}},={{$json.modality}},={{$json.content}},={{JSON.stringify($json.metadata)}},={{new Date().toISOString()}}"
+      },
+      "id": "6g7h8i9j-postgres-store",
+      "name": "Store in Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1650, 300],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials",
+          "name": "Postgres DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://qdrant.nerdz.cloud/collections/conversations/points",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "points",
+              "value": "[{\"id\": \"{{$json.metadata.messageId}}\", \"vector\": null, \"payload\": {{JSON.stringify($json)}}}]"
+            }
+          ]
+        }
+      },
+      "id": "7h8i9j0k-qdrant-embed",
+      "name": "Embed in Qdrant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "qdrant-credentials",
+          "name": "Qdrant API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": "primary_ai_workflow"
+      },
+      "id": "8i9j0k1l-execute-primary",
+      "name": "Execute Primary AI Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [2050, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Discord DM Ingest Workflow\n\nThis workflow handles incoming Discord DMs from Gavin.\n\n### Features:\n1. Filters to only process DMs from Gavin (ID: 212103531446927362)\n2. Handles both text and voice messages\n3. Voice messages are transcribed using Whisper\n4. All messages are normalized, stored in Postgres, and embedded in Qdrant\n5. Triggers the Primary AI Workflow for processing\n\n### Required Credentials:\n- Discord Bot Token\n- OpenAI API (for Whisper)\n- Postgres Connection\n- Qdrant API Key",
+        "height": 300,
+        "width": 400
+      },
+      "id": "9j0k1l2m-sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [250, 50]
+    }
+  ],
+  "connections": {
+    "Discord DM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter DMs Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter DMs Only": {
+      "main": [
+        [
+          {
+            "node": "Filter Gavin Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Gavin Only": {
+      "main": [
+        [
+          {
+            "node": "Check for Voice Attachment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Voice Attachment": {
+      "main": [
+        [
+          {
+            "node": "Download Voice File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalize Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Voice File": {
+      "main": [
+        [
+          {
+            "node": "Whisper STT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whisper STT": {
+      "main": [
+        [
+          {
+            "node": "Normalize Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Event": {
+      "main": [
+        [
+          {
+            "node": "Store in Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Postgres": {
+      "main": [
+        [
+          {
+            "node": "Embed in Qdrant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed in Qdrant": {
+      "main": [
+        [
+          {
+            "node": "Execute Primary AI Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error_handler_workflow"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
