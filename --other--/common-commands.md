@@ -22,6 +22,14 @@
     kubectl --namespace home annotate externalsecret homepage force-sync=$(date +%s) --overwrite
 ```
 
+## Fixing Kustomizations when they have a timeout
+
+```bash
+flux reconcile source git home-kubernetes -n flux-system
+flux reconcile kustomization cluster-apps-rook-ceph -n flux-system --with-source
+```
+
+
 ## Starting a privileged container on the node (No SSH on TalosOS)
 
 ```bash
