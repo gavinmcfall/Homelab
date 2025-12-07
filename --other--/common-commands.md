@@ -15,6 +15,22 @@
     find ~/cloned-repos/homelab-repos -type d -name ".git" -execdir git pull \;
 ```
 
+## Rebasing Renovate PRs
+
+```bash
+### All PRs
+gh pr list --author "nerdz-bot[bot]" --state open --json number --jq '.[].number' | \
+  xargs -I {} sh -c 'echo "Labeling PR #{}" && echo "{\"labels\":[\"renovate/force-rebase\"]}" | gh api repos/gavinmcfall/home-ops/issues/{}/labels --method POST --input - --silent'
+### One PR
+echo '{"labels":["renovate/force-rebase"]}' | gh api repos/gavinmcfall/home-ops/issues/1320/labels --method POST --input - --silent
+### Kick off Rebase Workflow
+gh workflow run renovate.yaml
+### View Online
+https://github.com/gavinmcfall/home-ops/actions/workflows/renovate.yaml
+```
+
+
+
 ## refreshing a Onepassword-Connect Secret
 
 ```bash
