@@ -67,7 +67,26 @@ flux reconcile kustomization cluster-apps-rook-ceph -n flux-system --with-source
     task volsync:unlock app=calibre cluster=admin@home-kubernetes ns=entertainment
 ```
 
-## AWS CLI - Remove contents of a bucket
+## AWS CLI
+
+### List bucket contents
+
+```bash
+aws s3 ls s3://nerdz-volsync-kopia/ --profile backblaze-b2
+aws s3 ls s3://nerdz-volsync-kopia/ --profile cloudflare-r2
+```
+
+### looping through a bucket to check folder size
+
+```bash
+for prefix in $(aws s3 ls s3://nerdz-volsync-kopia/ --profile backblaze-b2 | awk '{print $2}'); do
+  echo -n "$prefix "
+  aws s3 ls s3://nerdz-volsync-kopia/$prefix --recursive --summarize --human-readable --profile backblaze-b2 | grep "Total Size"
+done
+```
+
+
+### Remove contents of a bucket
 
 ```bash
     aws s3 rm s3://volsync/fileflows \
